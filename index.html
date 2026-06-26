@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buscador de Desaparecidos · Terremoto Venezuela 2026</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f4f5;
+      color: #18181b;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1d4ed8;
+      color: white;
+      padding: 16px 20px;
+      text-align: center;
+    }
+    header h1 { font-size: 1.2rem; font-weight: 700; }
+    header p  { font-size: 0.8rem; opacity: 0.85; margin-top: 4px; }
+
+    .flag { font-size: 1.4rem; margin-bottom: 4px; }
+
+    /* ── CARGA DE ARCHIVO ── */
+    #zona-carga {
+      margin: 24px 16px;
+      border: 2px dashed #93c5fd;
+      border-radius: 12px;
+      padding: 32px 16px;
+      text-align: center;
+      background: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #zona-carga:hover { background: #eff6ff; }
+    #zona-carga input { display: none; }
+    #zona-carga .icono { font-size: 2.5rem; margin-bottom: 8px; }
+    #zona-carga p { color: #3b82f6; font-weight: 600; font-size: 0.95rem; }
+    #zona-carga small { color: #6b7280; font-size: 0.8rem; }
+
+    /* ── BÚSQUEDA ── */
+    #zona-busqueda { display: none; padding: 0 16px; }
+
+    .stats-bar {
+      background: white;
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      font-size: 0.82rem;
+      color: #6b7280;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .stats-bar span { display: flex; align-items: center; gap: 4px; }
+
+    #buscador {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 1rem;
+      border: 2px solid #e4e4e7;
+      border-radius: 10px;
+      outline: none;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    #buscador:focus { border-color: #3b82f6; }
+
+    .filtros {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .filtro-btn {
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1.5px solid #e4e4e7;
+      background: white;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-weight: 500;
+    }
+    .filtro-btn.activo { background: #1d4ed8; color: white; border-color: #1d4ed8; }
+    .filtro-btn.rescate.activo { background: #dc2626; border-color: #dc2626; }
+
+    /* ── CONTADOR ── */
+    #contador {
+      font-size: 0.82rem;
+      color: #6b7280;
+      margin-bottom: 10px;
+      padding: 0 2px;
+    }
+
+    /* ── TARJETAS ── */
+    #resultados { display: flex; flex-direction: column; gap: 10px; padding-bottom: 32px; }
+
+    .tarjeta {
+      background: white;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+      border-left: 4px solid #e4e4e7;
+    }
+    .tarjeta.desaparecido  { border-left-color: #f59e0b; }
+    .tarjeta.localizado    { border-left-color: #22c55e; }
+    .tarjeta.rescate       { border-left-color: #dc2626; }
+
+    .tarjeta-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 6px;
+    }
+    .nombre {
+      font-weight: 700;
+      font-size: 1rem;
+      line-height: 1.3;
+      flex: 1;
+    }
+    .nombre mark {
+      background: #fef08a;
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+
+    .badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      margin-left: 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .badge.desaparecido { background: #fef3c7; color: #92400e; }
+    .badge.localizado   { background: #dcfce7; color: #166534; }
+    .badge.rescate      { background: #fee2e2; color: #991b1b; }
+
+    .tarjeta-datos {
+      font-size: 0.82rem;
+      color: #52525b;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .tarjeta-datos span { display: flex; align-items: flex-start; gap: 6px; }
+    .tarjeta-datos .etiq { color: #a1a1aa; min-width: 60px; flex-shrink: 0; }
+
+    .fuente-tag {
+      display: inline-block;
+      font-size: 0.68rem;
+      color: #6b7280;
+      background: #f4f4f5;
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin-top: 6px;
+    }
+
+    /* ── VACÍO ── */
+    #vacio {
+      display: none;
+      text-align: center;
+      padding: 48px 16px;
+      color: #6b7280;
+    }
+    #vacio .icono { font-size: 3rem; margin-bottom: 12px; }
+
+    /* ── PIE ── */
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 0.75rem;
+      color: #a1a1aa;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="flag">🇻🇪</div>
+  <h1>Buscador de Desaparecidos</h1>
+  <p>Terremoto Venezuela · 24 de junio de 2026</p>
+</header>
+
+<!-- CARGA -->
+<div id="zona-carga" onclick="document.getElementById('archivo-csv').click()">
+  <input type="file" id="archivo-csv" accept=".csv">
+  <div class="icono">📂</div>
+  <p>Toca aquí para cargar el CSV</p>
+  <small>Selecciona el archivo <strong>desaparecidos_consolidado.csv</strong></small>
+</div>
+
+<!-- BÚSQUEDA -->
+<div id="zona-busqueda">
+  <div class="stats-bar" id="stats-bar"></div>
+
+  <input
+    type="search"
+    id="buscador"
+    placeholder="🔍  Buscar por nombre o cédula…"
+    autocomplete="off"
+    autocorrect="off"
+    spellcheck="false"
+  >
+
+  <div class="filtros">
+    <button class="filtro-btn activo" data-estado="todos" onclick="setFiltro(this)">Todos</button>
+    <button class="filtro-btn" data-estado="desaparecido" onclick="setFiltro(this)">⚠️ Buscados</button>
+    <button class="filtro-btn rescate" data-estado="atrapado_rescate" onclick="setFiltro(this)">🆘 Atrapados</button>
+    <button class="filtro-btn" data-estado="localizado" onclick="setFiltro(this)">✅ Localizados</button>
+  </div>
+
+  <div id="contador"></div>
+  <div id="resultados"></div>
+  <div id="vacio">
+    <div class="icono">🔍</div>
+    <p>No se encontraron resultados.<br>Intenta con otro nombre o cédula.</p>
+  </div>
+</div>
+
+<footer>
+  Datos de encuentralos.tecnosoft.dev · laguaira.hsiciliano.com<br>
+  Información no verificada · Solo con fines humanitarios
+</footer>
+
+<script>
+  let REGISTROS = [];
+  let filtroEstado = 'todos';
+  const MAX_RESULTADOS = 50;
+
+  // ── CARGA DE CSV ──
+  document.getElementById('archivo-csv').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      REGISTROS = parsearCSV(ev.target.result);
+      iniciarBusqueda();
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  function parsearCSV(texto) {
+    const lineas = texto.split('\n');
+    if (lineas.length < 2) return [];
+    const encabezados = parsearLinea(lineas[0]);
+    const filas = [];
+    for (let i = 1; i < lineas.length; i++) {
+      const vals = parsearLinea(lineas[i]);
+      if (vals.length < 2) continue;
+      const obj = {};
+      encabezados.forEach((h, idx) => { obj[h] = (vals[idx] || '').trim(); });
+      filas.push(obj);
+    }
+    return filas;
+  }
+
+  function parsearLinea(linea) {
+    const resultado = [];
+    let actual = '';
+    let dentroComillas = false;
+    for (let i = 0; i < linea.length; i++) {
+      const c = linea[i];
+      if (c === '"') { dentroComillas = !dentroComillas; }
+      else if (c === ',' && !dentroComillas) { resultado.push(actual); actual = ''; }
+      else { actual += c; }
+    }
+    resultado.push(actual);
+    return resultado;
+  }
+
+  function iniciarBusqueda() {
+    document.getElementById('zona-carga').style.display = 'none';
+    document.getElementById('zona-busqueda').style.display = 'block';
+
+    // Stats
+    const total      = REGISTROS.length;
+    const localizados = REGISTROS.filter(r => r.estado && r.estado.includes('localiz')).length;
+    const atrapados   = REGISTROS.filter(r => r.estado === 'atrapado_rescate').length;
+    document.getElementById('stats-bar').innerHTML = `
+      <span>📋 <strong>${total.toLocaleString()}</strong> registros</span>
+      <span>⚠️ <strong>${(total - localizados).toLocaleString()}</strong> buscados</span>
+      <span>✅ <strong>${localizados.toLocaleString()}</strong> localizados</span>
+      ${atrapados > 0 ? `<span>🆘 <strong>${atrapados}</strong> atrapados</span>` : ''}
+    `;
+
+    mostrarResultados('');
+    document.getElementById('buscador').addEventListener('input', function() {
+      mostrarResultados(this.value.trim());
+    });
+  }
+
+  function setFiltro(btn) {
+    document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
+    btn.classList.add('activo');
+    filtroEstado = btn.dataset.estado;
+    mostrarResultados(document.getElementById('buscador').value.trim());
+  }
+
+  function mostrarResultados(query) {
+    const q = normalizar(query);
+    const resultados = document.getElementById('resultados');
+    const vacio = document.getElementById('vacio');
+    const contador = document.getElementById('contador');
+    resultados.innerHTML = '';
+
+    let filtrados = REGISTROS.filter(r => {
+      // Filtro de estado
+      if (filtroEstado !== 'todos') {
+        if (filtroEstado === 'localizado' && !r.estado.includes('localiz')) return false;
+        if (filtroEstado === 'desaparecido' && r.estado !== 'desaparecido') return false;
+        if (filtroEstado === 'atrapado_rescate' && r.estado !== 'atrapado_rescate') return false;
+      }
+      // Filtro de búsqueda
+      if (!q) return true;
+      const nombre  = normalizar(r.nombre || '');
+      const cedula  = (r.cedula || '').replace(/\D/g, '');
+      const ubicacion = normalizar(r.ubicacion || '');
+      return nombre.includes(q) || cedula.includes(q) || ubicacion.includes(q);
+    });
+
+    if (filtrados.length === 0) {
+      vacio.style.display = 'block';
+      contador.textContent = '';
+      return;
+    }
+
+    vacio.style.display = 'none';
+    const mostrando = Math.min(filtrados.length, MAX_RESULTADOS);
+    contador.textContent = filtrados.length > MAX_RESULTADOS
+      ? `Mostrando ${mostrando} de ${filtrados.length.toLocaleString()} resultados. Afina la búsqueda para ver más.`
+      : `${filtrados.length.toLocaleString()} resultado${filtrados.length !== 1 ? 's' : ''}`;
+
+    filtrados.slice(0, MAX_RESULTADOS).forEach(r => {
+      resultados.appendChild(crearTarjeta(r, query));
+    });
+  }
+
+  function crearTarjeta(r, query) {
+    const div = document.createElement('div');
+    const clase = r.estado === 'localizado' ? 'localizado'
+                : r.estado === 'atrapado_rescate' ? 'rescate'
+                : 'desaparecido';
+    div.className = `tarjeta ${clase}`;
+
+    const badgeTexto = r.estado === 'localizado'        ? '✅ Localizado'
+                     : r.estado === 'atrapado_rescate'  ? '🆘 Atrapado'
+                     : '⚠️ Buscado';
+
+    const nombreResaltado = query
+      ? resaltar(r.nombre || '(sin nombre)', query)
+      : (r.nombre || '(sin nombre)');
+
+    const datosHTML = [
+      r.cedula    ? `<span><span class="etiq">Cédula</span>${r.cedula}</span>` : '',
+      r.edad      ? `<span><span class="etiq">Edad</span>${r.edad} años${r.sexo ? ' · ' + r.sexo : ''}</span>` : '',
+      r.ubicacion ? `<span><span class="etiq">Zona</span>${r.ubicacion}</span>` : '',
+      r.descripcion ? `<span><span class="etiq">Señas</span>${r.descripcion}</span>` : '',
+      r.contacto  ? `<span><span class="etiq">Contacto</span><strong>${r.contacto}</strong></span>` : '',
+    ].filter(Boolean).join('');
+
+    const fuentes = { encuentralos: 'Encuéntralos', hsiciliano: 'La Guaira · Hsiciliano', venezuelatebusca: 'Venezuela te busca' };
+
+    div.innerHTML = `
+      <div class="tarjeta-header">
+        <div class="nombre">${nombreResaltado}</div>
+        <span class="badge ${clase}">${badgeTexto}</span>
+      </div>
+      <div class="tarjeta-datos">${datosHTML}</div>
+      <span class="fuente-tag">📌 ${fuentes[r.fuente] || r.fuente}</span>
+    `;
+    return div;
+  }
+
+  function normalizar(str) {
+    return str.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .replace(/\s+/g, ' ').trim();
+  }
+
+  function resaltar(texto, query) {
+    if (!query) return texto;
+    const qNorm = normalizar(query);
+    // Escapar HTML básico
+    const seguro = texto.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const regex = new RegExp(qNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    // Resaltar en el texto normalizado para encontrar posición
+    const norm = normalizar(texto);
+    const match = regex.exec(norm);
+    if (!match) return seguro;
+    const ini = match.index;
+    const fin = ini + match[0].length;
+    return seguro.slice(0, ini) + '<mark>' + seguro.slice(ini, fin) + '</mark>' + seguro.slice(fin);
+  }
+</script>
+</body>
+</html>
