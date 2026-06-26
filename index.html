@@ -14,6 +14,11 @@
       min-height: 100vh;
     }
 
+    .contenedor {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
     header {
       background: #1d4ed8;
       color: white;
@@ -189,6 +194,7 @@
 </header>
 
 <!-- CARGA -->
+<div class="contenedor">
 <div id="zona-carga">
   <div class="icono">⏳</div>
   <p>Cargando datos…</p>
@@ -211,7 +217,6 @@
   <div class="filtros">
     <button class="filtro-btn activo" data-estado="todos" onclick="setFiltro(this)">Todos</button>
     <button class="filtro-btn" data-estado="desaparecido" onclick="setFiltro(this)">⚠️ Buscados</button>
-    <button class="filtro-btn rescate" data-estado="atrapado_rescate" onclick="setFiltro(this)">🆘 Atrapados</button>
     <button class="filtro-btn" data-estado="localizado" onclick="setFiltro(this)">✅ Localizados</button>
   </div>
 
@@ -222,9 +227,11 @@
     <p>No se encontraron resultados.<br>Intenta con otro nombre o cédula.</p>
   </div>
 </div>
+</div><!-- /contenedor -->
 
 <footer>
-  Datos de encuentralos.tecnosoft.dev · laguaira.hsiciliano.com<br>
+  Datos de: encuentralos.tecnosoft.dev · laguaira.hsiciliano.com · venezuelareporta.org<br>
+  pacientesterremotovzla.lovable.app · desaparecidosterremotovenezuela.com<br>
   Información no verificada · Solo con fines humanitarios
 </footer>
 
@@ -373,7 +380,14 @@
       r.contacto  ? `<span><span class="etiq">Contacto</span><strong>${r.contacto}</strong></span>` : '',
     ].filter(Boolean).join('');
 
-    const fuentes = { encuentralos: 'Encuéntralos', hsiciliano: 'La Guaira · Hsiciliano', venezuelatebusca: 'Venezuela te busca' };
+    const fuentes = {
+      encuentralos:       'Encuéntralos',
+      hsiciliano:         'La Guaira · Hsiciliano',
+      venezuelatebusca:   'Venezuela te busca',
+      venezuelareporta:   'Venezuela Reporta',
+      pacientes_hospitales: 'Pacientes en Hospitales',
+      desaparecidos_ve:   'Desaparecidos Terremoto VE',
+    };
 
     div.innerHTML = `
       <div class="tarjeta-header">
