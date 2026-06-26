@@ -189,11 +189,10 @@
 </header>
 
 <!-- CARGA -->
-<div id="zona-carga" onclick="document.getElementById('archivo-csv').click()">
-  <input type="file" id="archivo-csv" accept=".csv">
-  <div class="icono">📂</div>
-  <p>Toca aquí para cargar el CSV</p>
-  <small>Selecciona el archivo <strong>desaparecidos_consolidado.csv</strong></small>
+<div id="zona-carga">
+  <div class="icono">⏳</div>
+  <p>Cargando datos…</p>
+  <small>Esto toma unos segundos</small>
 </div>
 
 <!-- BÚSQUEDA -->
@@ -233,17 +232,26 @@
   let REGISTROS = [];
   let filtroEstado = 'todos';
   const MAX_RESULTADOS = 50;
+  const CSV_URL = 'desaparecidos_consolidado.csv';
 
-  // ── CARGA DE CSV ──
-  document.getElementById('archivo-csv').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(ev) {
-      REGISTROS = parsearCSV(ev.target.result);
-      iniciarBusqueda();
-    };
-    reader.readAsText(file, 'UTF-8');
+  // ── CARGA AUTOMÁTICA DEL CSV ──
+  window.addEventListener('DOMContentLoaded', function() {
+    fetch(CSV_URL)
+      .then(r => {
+        if (!r.ok) throw new Error('No se pudo cargar el CSV');
+        return r.text();
+      })
+      .then(texto => {
+        REGISTROS = parsearCSV(texto);
+        iniciarBusqueda();
+      })
+      .catch(err => {
+        document.getElementById('zona-carga').innerHTML = `
+          <div class="icono">❌</div>
+          <p style="color:#dc2626">Error al cargar los datos</p>
+          <small>${err.message}</small>
+        `;
+      });
   });
 
   function parsearCSV(texto) {
