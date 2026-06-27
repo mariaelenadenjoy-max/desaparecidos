@@ -296,7 +296,7 @@
 
     // Stats
     const total      = REGISTROS.length;
-    const localizados = REGISTROS.filter(r => r.estado && r.estado.includes('localiz')).length;
+    const localizados = REGISTROS.filter(r => r.estado && (r.estado.includes('localiz') || r.estado.includes('encontr') || r.estado.includes('salvo'))).length;
     const atrapados   = REGISTROS.filter(r => r.estado === 'atrapado_rescate').length;
     document.getElementById('stats-bar').innerHTML = `
       <span>📋 <strong>${total.toLocaleString()}</strong> registros</span>
@@ -328,7 +328,7 @@
     let filtrados = REGISTROS.filter(r => {
       // Filtro de estado
       if (filtroEstado !== 'todos') {
-        if (filtroEstado === 'localizado' && !r.estado.includes('localiz')) return false;
+        if (filtroEstado === 'localizado' && !(r.estado.includes('localiz') || r.estado.includes('encontr') || r.estado.includes('salvo'))) return false;
         if (filtroEstado === 'desaparecido' && r.estado !== 'desaparecido') return false;
         if (filtroEstado === 'atrapado_rescate' && r.estado !== 'atrapado_rescate') return false;
       }
@@ -359,12 +359,13 @@
 
   function crearTarjeta(r, query) {
     const div = document.createElement('div');
-    const clase = r.estado === 'localizado' ? 'localizado'
+    const esLocalizado = r.estado === 'localizado' || r.estado === 'encontrado' || r.estado === 'a_salvo';
+    const clase = esLocalizado ? 'localizado'
                 : r.estado === 'atrapado_rescate' ? 'rescate'
                 : 'desaparecido';
     div.className = `tarjeta ${clase}`;
 
-    const badgeTexto = r.estado === 'localizado'        ? '✅ Localizado'
+    const badgeTexto = esLocalizado                      ? '✅ Localizado'
                      : r.estado === 'atrapado_rescate'  ? '🆘 Atrapado'
                      : '⚠️ Buscado';
 
@@ -387,6 +388,8 @@
       venezuelareporta:   'Venezuela Reporta',
       pacientes_hospitales: 'Pacientes en Hospitales',
       desaparecidos_ve:   'Desaparecidos Terremoto VE',
+      hospitales_pdf:     'Hospitales · Lista Oficial',
+      acopio_campo_golf:  'Acopio · Campo de Golf La Guaira',
     };
 
     div.innerHTML = `
