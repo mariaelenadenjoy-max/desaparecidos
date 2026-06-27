@@ -51,7 +51,9 @@
     .tarjeta-datos { font-size: 0.82rem; color: #52525b; display: flex; flex-direction: column; gap: 3px; }
     .tarjeta-datos span { display: flex; align-items: flex-start; gap: 6px; }
     .tarjeta-datos .etiq { color: #a1a1aa; min-width: 60px; flex-shrink: 0; }
-    .fuente-tag { display: inline-block; font-size: 0.68rem; color: #6b7280; background: #f4f4f5; border-radius: 4px; padding: 2px 6px; margin-top: 6px; }
+    .fuente-tag { display: inline-block; font-size: 0.68rem; color: #6b7280; background: #f4f4f5; border-radius: 4px; padding: 2px 6px; margin-top: 4px; margin-right: 4px; }
+    .tarjeta-fuentes { margin-top: 4px; }
+    .desc-localizado { margin-top: 6px; font-size: 0.82rem; color: #166534; background: #f0fdf4; border-left: 3px solid #4ade80; border-radius: 4px; padding: 5px 8px; line-height: 1.4; }
     .expand-hint { float: right; font-size: 0.68rem; color: #a1a1aa; margin-top: 6px; }
 
     /* ── PANEL EXPANDIDO ── */
@@ -247,6 +249,47 @@
     return true;
   }
 
+  function elegirRepresentante(grupo) {
+    var fallecidos  = grupo.filter(function(r) { return esFallecido(r); });
+    var localizados = grupo.filter(function(r) { return esLoc(r.estado) && !esFallecido(r); });
+    var atrapados   = grupo.filter(function(r) { return r.estado === 'atrapado_rescate'; });
+    var principal   = fallecidos[0] || localizados[0] || atrapados[0] || grupo[0];
+
+    var merged = Object.assign({}, principal);
+    merged._localizados  = localizados;
+    merged._grupo_size   = grupo.length;
+    merged._fuentes_list = grupo.map(function(r) { return r.fuente; })
+                                .filter(function(f, i, a) { return a.indexOf(f) === i; });
+
+    // Si hay un localizado y el principal no lo es, tomar sus datos
+    if (localizados.length > 0 && !esLoc(principal.estado)) {
+      var loc = localizados[0];
+      merged.estado      = loc.estado;
+      merged.descripcion = loc.descripcion || merged.descripcion;
+      merged.ubicacion   = loc.ubicacion   || merged.ubicacion;
+      merged.url         = loc.url         || merged.url;
+    }
+
+    // Elegir la descripción más informativa del grupo de localizados
+    if (localizados.length > 0) {
+      var mejorDesc = localizados.slice().sort(function(a,b) {
+        return (b.descripcion||'').length - (a.descripcion||'').length;
+      })[0];
+      if (mejorDesc.descripcion) merged.descripcion = mejorDesc.descripcion;
+      var mejorUbi = localizados.find(function(r) { return r.ubicacion && r.ubicacion.length > 2; });
+      if (mejorUbi) merged.ubicacion = mejorUbi.ubicacion;
+    }
+
+    // Completar datos faltantes de cualquier registro del grupo
+    grupo.forEach(function(r) {
+      if (!merged.cedula   && r.cedula)   merged.cedula   = r.cedula;
+      if (!merged.edad     && r.edad)     merged.edad     = r.edad;
+      if (!merged.contacto && r.contacto) merged.contacto = r.contacto;
+    });
+
+    return merged;
+  }
+
   function mostrarResultados(query) {
     var q = norm(query);
     var resultados = document.getElementById('resultados');
@@ -267,14 +310,24 @@
              norm(r.ubicacion||'').includes(q) || norm(r.descripcion||'').includes(q);
     });
 
-    filtrados = ordenar(filtrados);
-    if (filtrados.length === 0) { vacio.style.display = 'block'; contador.textContent = ''; return; }
+    // Agrupar por nombre normalizado → una tarjeta por persona
+    var grupos = {};
+    filtrados.forEach(function(r) {
+      var clave = norm(r.nombre || '');
+      if (!clave || clave.length < 2) clave = '_solo_' + Math.random();
+      if (!grupos[clave]) grupos[clave] = [];
+      grupos[clave].push(r);
+    });
+    var representantes = Object.values(grupos).map(elegirRepresentante);
+    representantes = ordenar(representantes);
+
+    if (representantes.length === 0) { vacio.style.display = 'block'; contador.textContent = ''; return; }
     vacio.style.display = 'none';
-    var n = Math.min(filtrados.length, MAX_RESULTADOS);
-    contador.textContent = filtrados.length > MAX_RESULTADOS
-      ? 'Mostrando ' + n + ' de ' + filtrados.length.toLocaleString() + ' resultados. Afina la b\xFAsqueda para ver m\xE1s.'
-      : filtrados.length.toLocaleString() + ' resultado' + (filtrados.length !== 1 ? 's' : '');
-    filtrados.slice(0, MAX_RESULTADOS).forEach(function(r) { resultados.appendChild(crearTarjeta(r, query)); });
+    var n = Math.min(representantes.length, MAX_RESULTADOS);
+    contador.textContent = representantes.length > MAX_RESULTADOS
+      ? 'Mostrando ' + n + ' de ' + representantes.length.toLocaleString() + ' resultados. Afina la b\xFAsqueda para ver m\xE1s.'
+      : representantes.length.toLocaleString() + ' resultado' + (representantes.length !== 1 ? 's' : '');
+    representantes.slice(0, MAX_RESULTADOS).forEach(function(r) { resultados.appendChild(crearTarjeta(r, query)); });
   }
 
   var FUENTES = {
@@ -294,19 +347,39 @@
     var badge = fall ? '&#129721; Fallecido' : loc ? '&#9989; Localizado' : r.estado === 'atrapado_rescate' ? '&#128682; Atrapado' : '&#9888;&#65039; Buscado';
     var nomHtml = query ? resaltar(r.nombre || '(sin nombre)', query) : (r.nombre || '(sin nombre)');
 
+    var estaLoc = loc && !fall;
+    var etiqUbi = estaLoc ? 'Localizado/a en' : 'Zona';
+
     var datos = [
-      r.cedula     ? '<span><span class="etiq">C\xE9dula</span>' + r.cedula + '</span>' : '',
-      r.edad       ? '<span><span class="etiq">Edad</span>' + r.edad + ' a\xF1os' + (r.sexo ? ' &middot; ' + r.sexo : '') + '</span>' : '',
-      r.ubicacion  ? '<span><span class="etiq">Zona</span>' + r.ubicacion + '</span>' : '',
-      r.contacto   ? '<span><span class="etiq">Contacto</span><strong>' + r.contacto + '</strong></span>' : '',
+      r.cedula    ? '<span><span class="etiq">C\xE9dula</span>' + r.cedula + '</span>' : '',
+      r.edad      ? '<span><span class="etiq">Edad</span>' + r.edad + ' a\xF1os' + (r.sexo ? ' &middot; ' + r.sexo : '') + '</span>' : '',
+      r.ubicacion ? '<span><span class="etiq">' + etiqUbi + '</span>' + r.ubicacion + '</span>' : '',
+      r.contacto  ? '<span><span class="etiq">Contacto</span><strong>' + r.contacto + '</strong></span>' : '',
     ].filter(Boolean).join('');
+
+    // Para localizados: descripción visible en el resumen
+    var descResumen = '';
+    if (estaLoc && r.descripcion) {
+      descResumen = '<div class="desc-localizado">&#128203; ' + r.descripcion + '</div>';
+    }
+
+    // Fuentes: mostrar todas las del grupo
+    var fuentesHtml = '';
+    if (r._fuentes_list && r._fuentes_list.length > 1) {
+      fuentesHtml = r._fuentes_list.map(function(f) {
+        return '<span class="fuente-tag">&#128204; ' + (FUENTES[f] || f) + '</span>';
+      }).join(' ');
+    } else {
+      fuentesHtml = '<span class="fuente-tag">&#128204; ' + (FUENTES[r.fuente] || r.fuente) + '</span>';
+    }
 
     // Panel expandido
     var detalleId = 'det_' + Math.random().toString(36).slice(2);
     var btnVer = r.url ? '<br><a class="btn-ver" href="' + r.url + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">&#128279; Ver perfil completo</a>' : '';
     var extraCampos = [
-      r.descripcion ? '<div class="fila"><span class="etiq">Se\xF1as</span><span>' + r.descripcion + '</span></div>' : '',
-      r.creado      ? '<div class="fila"><span class="etiq">Fecha</span><span>' + r.creado + '</span></div>' : '',
+      (!estaLoc && r.descripcion) ? '<div class="fila"><span class="etiq">Se\xF1as</span><span>' + r.descripcion + '</span></div>' : '',
+      r.creado ? '<div class="fila"><span class="etiq">Fecha</span><span>' + r.creado + '</span></div>' : '',
+      (r._grupo_size > 1) ? '<div class="fila"><span class="etiq">Reportado/a en</span><span>' + r._grupo_size + ' fuentes</span></div>' : '',
     ].filter(Boolean).join('');
 
     var fotoHtml = '';
@@ -320,7 +393,8 @@
       '<div class="tarjeta-resumen">' +
         '<div class="tarjeta-header"><div class="nombre">' + nomHtml + '</div><span class="badge ' + clase + '">' + badge + '</span></div>' +
         '<div class="tarjeta-datos">' + datos + '</div>' +
-        '<span class="fuente-tag">&#128204; ' + (FUENTES[r.fuente] || r.fuente) + '</span>' +
+        descResumen +
+        '<div class="tarjeta-fuentes">' + fuentesHtml + '</div>' +
         '<span class="expand-hint">toca para ver m\xE1s &#9660;</span>' +
       '</div>' +
       '<div class="tarjeta-detalle">' +
