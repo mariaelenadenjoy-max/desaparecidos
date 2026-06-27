@@ -13,6 +13,7 @@
     header p  { font-size: 0.8rem; opacity: 0.85; margin-top: 4px; }
     .flag { font-size: 1.4rem; margin-bottom: 4px; }
     #ultima-actualizacion { background: #eff6ff; border-bottom: 1px solid #bfdbfe; text-align: center; padding: 6px 16px; font-size: 0.75rem; color: #1d4ed8; }
+    #mensaje-puente { background: #f0fdf4; border-bottom: 1px solid #bbf7d0; text-align: center; padding: 8px 20px; font-size: 0.78rem; color: #166534; line-height: 1.4; }
     #zona-carga { margin: 24px 16px; border: 2px dashed #93c5fd; border-radius: 12px; padding: 32px 16px; text-align: center; background: white; }
     #zona-carga .icono { font-size: 2.5rem; margin-bottom: 8px; }
     #zona-carga p { color: #3b82f6; font-weight: 600; font-size: 0.95rem; }
@@ -86,6 +87,7 @@
   <p>Terremoto Venezuela &middot; 24 de junio de 2026</p>
 </header>
 <div id="ultima-actualizacion">&#128336; Cargando&hellip;</div>
+<div id="mensaje-puente">&#128149; Esta plataforma re&uacute;ne y cruza la informaci&oacute;n de m&uacute;ltiples iniciativas humanitarias. No somos una fuente original &mdash; somos un puente para ayudarte a encontrar a tus seres queridos. Siempre verifica la informaci&oacute;n en la fuente original antes de actuar.</div>
 <div class="contenedor">
 <div id="zona-carga">
   <div class="icono">&#9203;</div>
@@ -227,11 +229,13 @@
 
   function esNombreValido(n) {
     if (!n || n.trim().length < 2) return false;
-    if (n.includes(',')) return false;       // CSV corrompido
-    if (n.includes('http')) return false;    // URLs
-    if (n.includes('@')) return false;       // emails
-    if (/^[.,;:\-\s]+$/.test(n)) return false; // solo puntuación
-    if (/\d{4}-\d{2}-\d{2}T/.test(n)) return false; // timestamps ISO
+    if (n.includes(',')) return false;                      // CSV corrompido
+    if (n.includes('http')) return false;                   // URLs
+    if (n.includes('@')) return false;                      // emails
+    if (/^[.,;:\-\s]+$/.test(n)) return false;             // solo puntuación
+    if (/\d{4}-\d{2}-\d{2}T/.test(n)) return false;       // timestamps ISO
+    if (/[-_]{4,}/.test(n)) return false;                  // muchos guiones seguidos
+    if (/^[A-Za-z0-9]{15,}$/.test(n.trim())) return false; // token/hash sin espacios
     return true;
   }
 
