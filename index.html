@@ -28,13 +28,16 @@
     .ordenar-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 0.78rem; color: #6b7280; }
     .ordenar-bar label { white-space: nowrap; }
     .ordenar-bar select { padding: 4px 8px; border-radius: 8px; border: 1.5px solid #e4e4e7; background: white; font-size: 0.78rem; cursor: pointer; outline: none; }
-    .ordenar-bar select:focus { border-color: #3b82f6; }
     #contador { font-size: 0.82rem; color: #6b7280; margin-bottom: 10px; padding: 0 2px; }
     #resultados { display: flex; flex-direction: column; gap: 10px; padding-bottom: 32px; }
-    .tarjeta { background: white; border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); border-left: 4px solid #e4e4e7; }
+
+    /* ── TARJETAS ── */
+    .tarjeta { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); border-left: 4px solid #e4e4e7; overflow: hidden; cursor: pointer; transition: box-shadow 0.15s; }
+    .tarjeta:hover { box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
     .tarjeta.desaparecido { border-left-color: #f59e0b; }
     .tarjeta.localizado   { border-left-color: #22c55e; }
     .tarjeta.rescate      { border-left-color: #dc2626; }
+    .tarjeta-resumen { padding: 14px; }
     .tarjeta-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
     .nombre { font-weight: 700; font-size: 1rem; line-height: 1.3; flex: 1; }
     .nombre mark { background: #fef08a; border-radius: 2px; padding: 0 1px; }
@@ -46,6 +49,31 @@
     .tarjeta-datos span { display: flex; align-items: flex-start; gap: 6px; }
     .tarjeta-datos .etiq { color: #a1a1aa; min-width: 60px; flex-shrink: 0; }
     .fuente-tag { display: inline-block; font-size: 0.68rem; color: #6b7280; background: #f4f4f5; border-radius: 4px; padding: 2px 6px; margin-top: 6px; }
+    .expand-hint { float: right; font-size: 0.68rem; color: #a1a1aa; margin-top: 6px; }
+
+    /* ── PANEL EXPANDIDO ── */
+    .tarjeta-detalle {
+      display: none;
+      border-top: 1px solid #f4f4f5;
+      padding: 14px;
+      background: #fafafa;
+      animation: slideDown 0.2s ease;
+    }
+    .tarjeta.abierta .tarjeta-detalle { display: block; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .detalle-foto { text-align: center; margin-bottom: 12px; }
+    .detalle-foto img { max-width: 140px; max-height: 180px; border-radius: 10px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .detalle-foto .sin-foto { width: 90px; height: 90px; border-radius: 50%; background: #e4e4e7; display: inline-flex; align-items: center; justify-content: center; font-size: 2.5rem; color: #a1a1aa; }
+    .detalle-cargando { text-align: center; padding: 12px; color: #6b7280; font-size: 0.82rem; }
+
+    .detalle-campos { display: flex; flex-direction: column; gap: 5px; font-size: 0.82rem; color: #52525b; margin-bottom: 12px; }
+    .detalle-campos .fila { display: flex; gap: 8px; }
+    .detalle-campos .etiq { color: #a1a1aa; min-width: 90px; flex-shrink: 0; font-size: 0.78rem; }
+
+    .btn-ver { display: inline-block; margin-top: 4px; padding: 7px 14px; background: #1d4ed8; color: white; border-radius: 8px; font-size: 0.8rem; font-weight: 600; text-decoration: none; }
+    .btn-ver:hover { background: #1e40af; }
+
     #vacio { display: none; text-align: center; padding: 48px 16px; color: #6b7280; }
     #vacio .icono { font-size: 3rem; margin-bottom: 12px; }
     footer { text-align: center; padding: 16px; font-size: 0.75rem; color: #a1a1aa; }
@@ -91,7 +119,7 @@
 </div>
 </div>
 <footer>
-  Datos de: encuentralos.tecnosoft.dev &middot; laguaira.hsiciliano.com &middot; venezuelareporta.org<br>
+  Datos de: encuentralos.tecnosoft.dev &middot; laguaira.hsiciliano.com<br>
   Hospitales &middot; Lista Oficial &middot; Centro de Acopio Campo de Golf La Guaira<br>
   Informaci&oacute;n no verificada &middot; Solo con fines humanitarios
 </footer>
@@ -105,15 +133,14 @@
     fetch(CSV_URL)
       .then(function(r) {
         if (!r.ok) throw new Error('No se pudo cargar el CSV');
-        var lastModified = r.headers.get('Last-Modified');
-        if (lastModified) mostrarUltimaActualizacion(new Date(lastModified));
+        var lm = r.headers.get('Last-Modified');
+        if (lm) mostrarUltimaActualizacion(new Date(lm));
         return r.text();
       })
       .then(function(texto) {
         REGISTROS = parsearCSV(texto);
-        if (document.getElementById('ultima-actualizacion').textContent.indexOf('Cargando') >= 0) {
+        if (document.getElementById('ultima-actualizacion').textContent.indexOf('Cargando') >= 0)
           calcularUltimaActualizacionDesdeDatos();
-        }
         iniciarBusqueda();
       })
       .catch(function(err) {
@@ -123,63 +150,64 @@
   });
 
   function mostrarUltimaActualizacion(fecha) {
-    var opciones = { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Caracas' };
-    document.getElementById('ultima-actualizacion').textContent = '\u{1F550} \xDAltima actualizaci\xF3n: ' + fecha.toLocaleDateString('es-VE', opciones) + ' (hora Venezuela)';
+    var op = { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'America/Caracas' };
+    document.getElementById('ultima-actualizacion').textContent = '🕐 \xDAltima actualizaci\xF3n: ' + fecha.toLocaleDateString('es-VE', op) + ' (hora Venezuela)';
   }
 
   function calcularUltimaActualizacionDesdeDatos() {
     var maxFecha = null;
     for (var i = 0; i < REGISTROS.length; i++) {
-      var r = REGISTROS[i];
-      if (!r.creado) continue;
-      var d = new Date(r.creado);
+      if (!REGISTROS[i].creado) continue;
+      var d = new Date(REGISTROS[i].creado);
       if (!isNaN(d) && (!maxFecha || d > maxFecha)) maxFecha = d;
     }
     if (maxFecha) mostrarUltimaActualizacion(maxFecha);
-    else document.getElementById('ultima-actualizacion').textContent = '\u{1F550} Fecha de actualizaci\xF3n no disponible';
+    else document.getElementById('ultima-actualizacion').textContent = '🕐 Fecha de actualizaci\xF3n no disponible';
   }
 
   function parsearCSV(texto) {
     var lineas = texto.split('\n');
     if (lineas.length < 2) return [];
-    var encabezados = parsearLinea(lineas[0]);
+    var enc = parsearLinea(lineas[0]);
     var filas = [];
     for (var i = 1; i < lineas.length; i++) {
       var vals = parsearLinea(lineas[i]);
       if (vals.length < 2) continue;
       var obj = {};
-      encabezados.forEach(function(h, idx) { obj[h] = (vals[idx] || '').trim(); });
+      enc.forEach(function(h, idx) { obj[h] = (vals[idx] || '').trim(); });
       filas.push(obj);
     }
     return filas;
   }
 
   function parsearLinea(linea) {
-    var resultado = [], actual = '', dentroComillas = false;
+    var res = [], cur = '', q = false;
     for (var i = 0; i < linea.length; i++) {
       var c = linea[i];
-      if (c === '"') { dentroComillas = !dentroComillas; }
-      else if (c === ',' && !dentroComillas) { resultado.push(actual); actual = ''; }
-      else { actual += c; }
+      if (c === '"') { q = !q; }
+      else if (c === ',' && !q) { res.push(cur); cur = ''; }
+      else { cur += c; }
     }
-    resultado.push(actual);
-    return resultado;
+    res.push(cur);
+    return res;
   }
 
   function iniciarBusqueda() {
     document.getElementById('zona-carga').style.display = 'none';
     document.getElementById('zona-busqueda').style.display = 'block';
     var total = REGISTROS.length;
-    var localizados = REGISTROS.filter(function(r) { return r.estado && (r.estado.includes('localiz') || r.estado.includes('encontr') || r.estado.includes('salvo')); }).length;
-    var atrapados = REGISTROS.filter(function(r) { return r.estado === 'atrapado_rescate'; }).length;
+    var loc = REGISTROS.filter(function(r) { return esLoc(r.estado); }).length;
+    var atr = REGISTROS.filter(function(r) { return r.estado === 'atrapado_rescate'; }).length;
     document.getElementById('stats-bar').innerHTML =
       '<span>&#128203; <strong>' + total.toLocaleString() + '</strong> registros</span>' +
-      '<span>&#9888;&#65039; <strong>' + (total - localizados).toLocaleString() + '</strong> buscados</span>' +
-      '<span>&#9989; <strong>' + localizados.toLocaleString() + '</strong> localizados</span>' +
-      (atrapados > 0 ? '<span>&#128682; <strong>' + atrapados + '</strong> atrapados</span>' : '');
+      '<span>&#9888;&#65039; <strong>' + (total - loc).toLocaleString() + '</strong> buscados</span>' +
+      '<span>&#9989; <strong>' + loc.toLocaleString() + '</strong> localizados</span>' +
+      (atr > 0 ? '<span>&#128682; <strong>' + atr + '</strong> atrapados</span>' : '');
     mostrarResultados('');
     document.getElementById('buscador').addEventListener('input', function() { mostrarResultados(this.value.trim()); });
   }
+
+  function esLoc(e) { return e && (e.includes('localiz') || e.includes('encontr') || e.includes('salvo')); }
 
   function setFiltro(btn) {
     document.querySelectorAll('.filtro-btn').forEach(function(b) { b.classList.remove('activo'); });
@@ -188,17 +216,27 @@
     mostrarResultados(document.getElementById('buscador').value.trim());
   }
 
-  function ordenarRegistros(lista) {
-    var orden = document.getElementById('orden').value;
-    if (orden === 'az') return lista.slice().sort(function(a,b) { return (a.nombre||'').localeCompare(b.nombre||'','es'); });
-    if (orden === 'za') return lista.slice().sort(function(a,b) { return (b.nombre||'').localeCompare(a.nombre||'','es'); });
-    if (orden === 'reciente') return lista.slice().sort(function(a,b) { var da=new Date(b.creado||0),db=new Date(a.creado||0); return isNaN(da)?1:isNaN(db)?-1:da-db; });
-    if (orden === 'antiguo')  return lista.slice().sort(function(a,b) { var da=new Date(a.creado||0),db=new Date(b.creado||0); return isNaN(da)?1:isNaN(db)?-1:da-db; });
+  function ordenar(lista) {
+    var ord = document.getElementById('orden').value;
+    if (ord === 'az') return lista.slice().sort(function(a,b){ return (a.nombre||'').localeCompare(b.nombre||'','es'); });
+    if (ord === 'za') return lista.slice().sort(function(a,b){ return (b.nombre||'').localeCompare(a.nombre||'','es'); });
+    if (ord === 'reciente') return lista.slice().sort(function(a,b){ var da=new Date(b.creado||0),db=new Date(a.creado||0); return isNaN(da)?1:isNaN(db)?-1:da-db; });
+    if (ord === 'antiguo')  return lista.slice().sort(function(a,b){ var da=new Date(a.creado||0),db=new Date(b.creado||0); return isNaN(da)?1:isNaN(db)?-1:da-db; });
     return lista;
   }
 
+  function esNombreValido(n) {
+    if (!n || n.trim().length < 2) return false;
+    if (n.includes(',')) return false;       // CSV corrompido
+    if (n.includes('http')) return false;    // URLs
+    if (n.includes('@')) return false;       // emails
+    if (/^[.,;:\-\s]+$/.test(n)) return false; // solo puntuación
+    if (/\d{4}-\d{2}-\d{2}T/.test(n)) return false; // timestamps ISO
+    return true;
+  }
+
   function mostrarResultados(query) {
-    var q = normalizar(query);
+    var q = norm(query);
     var resultados = document.getElementById('resultados');
     var vacio = document.getElementById('vacio');
     var contador = document.getElementById('contador');
@@ -206,71 +244,127 @@
 
     var filtrados = REGISTROS.filter(function(r) {
       if (filtroEstado !== 'todos') {
-        if (filtroEstado === 'localizado' && !(r.estado.includes('localiz') || r.estado.includes('encontr') || r.estado.includes('salvo'))) return false;
+        if (filtroEstado === 'localizado' && !esLoc(r.estado)) return false;
         if (filtroEstado === 'desaparecido' && r.estado !== 'desaparecido') return false;
         if (filtroEstado === 'atrapado_rescate' && r.estado !== 'atrapado_rescate') return false;
       }
-      if (!q && !r.nombre) return false;
+      if (!esNombreValido(r.nombre)) return false;
       if (!q) return true;
-      var nombre = normalizar(r.nombre || '');
-      var cedula = (r.cedula || '').replace(/\D/g, '');
-      var ubicacion = normalizar(r.ubicacion || '');
-      var desc = normalizar(r.descripcion || '');
-      return nombre.includes(q) || cedula.includes(q) || ubicacion.includes(q) || desc.includes(q);
+      return norm(r.nombre||'').includes(q) || (r.cedula||'').replace(/\D/g,'').includes(q) ||
+             norm(r.ubicacion||'').includes(q) || norm(r.descripcion||'').includes(q);
     });
 
-    filtrados = ordenarRegistros(filtrados);
-
-    if (filtrados.length === 0) {
-      vacio.style.display = 'block';
-      contador.textContent = '';
-      return;
-    }
+    filtrados = ordenar(filtrados);
+    if (filtrados.length === 0) { vacio.style.display = 'block'; contador.textContent = ''; return; }
     vacio.style.display = 'none';
-    var mostrando = Math.min(filtrados.length, MAX_RESULTADOS);
+    var n = Math.min(filtrados.length, MAX_RESULTADOS);
     contador.textContent = filtrados.length > MAX_RESULTADOS
-      ? 'Mostrando ' + mostrando + ' de ' + filtrados.length.toLocaleString() + ' resultados. Afina la b\xFAsqueda para ver m\xE1s.'
+      ? 'Mostrando ' + n + ' de ' + filtrados.length.toLocaleString() + ' resultados. Afina la b\xFAsqueda para ver m\xE1s.'
       : filtrados.length.toLocaleString() + ' resultado' + (filtrados.length !== 1 ? 's' : '');
     filtrados.slice(0, MAX_RESULTADOS).forEach(function(r) { resultados.appendChild(crearTarjeta(r, query)); });
   }
 
+  var FUENTES = {
+    encuentralos:'Enc\xFAentralos', hsiciliano:'La Guaira \xB7 Hsiciliano',
+    venezuelatebusca:'Venezuela te busca', venezuelareporta:'Venezuela Reporta',
+    pacientes_hospitales:'Pacientes en Hospitales', desaparecidos_ve:'Desaparecidos Terremoto VE',
+    hospitales_pdf:'Hospitales \xB7 Lista Oficial', acopio_campo_golf:'Acopio \xB7 Campo de Golf La Guaira'
+  };
+
   function crearTarjeta(r, query) {
     var div = document.createElement('div');
-    var esLocalizado = r.estado === 'localizado' || r.estado === 'encontrado' || r.estado === 'a_salvo' || (r.estado && (r.estado.includes('localiz') || r.estado.includes('encontr') || r.estado.includes('salvo')));
-    var clase = esLocalizado ? 'localizado' : r.estado === 'atrapado_rescate' ? 'rescate' : 'desaparecido';
+    var loc = esLoc(r.estado);
+    var clase = loc ? 'localizado' : r.estado === 'atrapado_rescate' ? 'rescate' : 'desaparecido';
     div.className = 'tarjeta ' + clase;
-    var badgeTexto = esLocalizado ? '&#9989; Localizado' : r.estado === 'atrapado_rescate' ? '&#128682; Atrapado' : '&#9888;&#65039; Buscado';
-    var nombreResaltado = query ? resaltar(r.nombre || '(sin nombre)', query) : (r.nombre || '(sin nombre)');
-    var datosHTML = [
-      r.cedula      ? '<span><span class="etiq">C\xE9dula</span>' + r.cedula + '</span>' : '',
-      r.edad        ? '<span><span class="etiq">Edad</span>' + r.edad + ' a\xF1os' + (r.sexo ? ' &middot; ' + r.sexo : '') + '</span>' : '',
-      r.ubicacion   ? '<span><span class="etiq">Zona</span>' + r.ubicacion + '</span>' : '',
-      r.descripcion ? '<span><span class="etiq">Se\xF1as</span>' + r.descripcion + '</span>' : '',
-      r.contacto    ? '<span><span class="etiq">Contacto</span><strong>' + r.contacto + '</strong></span>' : '',
-      r.creado      ? '<span><span class="etiq">Fecha</span>' + r.creado + '</span>' : '',
+
+    var badge = loc ? '&#9989; Localizado' : r.estado === 'atrapado_rescate' ? '&#128682; Atrapado' : '&#9888;&#65039; Buscado';
+    var nomHtml = query ? resaltar(r.nombre || '(sin nombre)', query) : (r.nombre || '(sin nombre)');
+
+    var datos = [
+      r.cedula     ? '<span><span class="etiq">C\xE9dula</span>' + r.cedula + '</span>' : '',
+      r.edad       ? '<span><span class="etiq">Edad</span>' + r.edad + ' a\xF1os' + (r.sexo ? ' &middot; ' + r.sexo : '') + '</span>' : '',
+      r.ubicacion  ? '<span><span class="etiq">Zona</span>' + r.ubicacion + '</span>' : '',
+      r.contacto   ? '<span><span class="etiq">Contacto</span><strong>' + r.contacto + '</strong></span>' : '',
     ].filter(Boolean).join('');
-    var fuentes = {
-      encuentralos:'Enc\xFAentralos', hsiciliano:'La Guaira \xB7 Hsiciliano',
-      venezuelatebusca:'Venezuela te busca', venezuelareporta:'Venezuela Reporta',
-      pacientes_hospitales:'Pacientes en Hospitales', desaparecidos_ve:'Desaparecidos Terremoto VE',
-      hospitales_pdf:'Hospitales \xB7 Lista Oficial', acopio_campo_golf:'Acopio \xB7 Campo de Golf La Guaira',
-    };
-    div.innerHTML = '<div class="tarjeta-header"><div class="nombre">' + nombreResaltado + '</div><span class="badge ' + clase + '">' + badgeTexto + '</span></div><div class="tarjeta-datos">' + datosHTML + '</div><span class="fuente-tag">&#128204; ' + (fuentes[r.fuente] || r.fuente) + '</span>';
+
+    // Panel expandido
+    var detalleId = 'det_' + Math.random().toString(36).slice(2);
+    var btnVer = r.url ? '<br><a class="btn-ver" href="' + r.url + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">&#128279; Ver perfil completo</a>' : '';
+    var extraCampos = [
+      r.descripcion ? '<div class="fila"><span class="etiq">Se\xF1as</span><span>' + r.descripcion + '</span></div>' : '',
+      r.creado      ? '<div class="fila"><span class="etiq">Fecha</span><span>' + r.creado + '</span></div>' : '',
+    ].filter(Boolean).join('');
+
+    var fotoHtml = '';
+    if (r.fuente === 'encuentralos' && r.id_fuente) {
+      fotoHtml = '<div class="detalle-foto" id="' + detalleId + '"><div class="detalle-cargando">&#128248; Cargando foto&hellip;</div></div>';
+    } else {
+      fotoHtml = '<div class="detalle-foto"><div class="sin-foto">&#128100;</div></div>';
+    }
+
+    div.innerHTML =
+      '<div class="tarjeta-resumen">' +
+        '<div class="tarjeta-header"><div class="nombre">' + nomHtml + '</div><span class="badge ' + clase + '">' + badge + '</span></div>' +
+        '<div class="tarjeta-datos">' + datos + '</div>' +
+        '<span class="fuente-tag">&#128204; ' + (FUENTES[r.fuente] || r.fuente) + '</span>' +
+        '<span class="expand-hint">toca para ver m\xE1s &#9660;</span>' +
+      '</div>' +
+      '<div class="tarjeta-detalle">' +
+        fotoHtml +
+        '<div class="detalle-campos">' + extraCampos + '</div>' +
+        btnVer +
+      '</div>';
+
+    // Click para expandir/colapsar
+    div.addEventListener('click', function(e) {
+      var yaAbierto = div.classList.contains('abierta');
+      // Cerrar otros
+      document.querySelectorAll('.tarjeta.abierta').forEach(function(t) { t.classList.remove('abierta'); t.querySelector('.expand-hint').textContent = 'toca para ver m\xE1s ▼'; });
+      if (!yaAbierto) {
+        div.classList.add('abierta');
+        div.querySelector('.expand-hint').textContent = 'cerrar ▲';
+        // Cargar foto de encuentralos si aplica
+        if (r.fuente === 'encuentralos' && r.id_fuente && document.getElementById(detalleId)) {
+          cargarFotoEncuentralos(r.id_fuente, detalleId);
+        }
+      }
+    });
+
     return div;
   }
 
-  function normalizar(str) {
+  function cargarFotoEncuentralos(id, contenedorId) {
+    var cont = document.getElementById(contenedorId);
+    if (!cont || cont.dataset.cargado) return;
+    cont.dataset.cargado = '1';
+
+    fetch('https://encuentralos.tecnosoft.dev/api/personas/' + id)
+      .then(function(r) { if (!r.ok) throw new Error('sin datos'); return r.json(); })
+      .then(function(data) {
+        var fotoUrl = data.foto || data.foto_url || data.image || data.photo || '';
+        var nombre = data.nombre || '';
+        if (fotoUrl) {
+          cont.innerHTML = '<img src="' + fotoUrl + '" alt="Foto de ' + nombre + '" onerror="this.parentNode.innerHTML=\'<div class=sin-foto>&#128100;</div>\'">';
+        } else {
+          cont.innerHTML = '<div class="sin-foto">&#128100;</div>';
+        }
+      })
+      .catch(function() {
+        cont.innerHTML = '<div class="sin-foto">&#128100;</div>';
+      });
+  }
+
+  function norm(str) {
     return str.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
   }
 
   function resaltar(texto, query) {
     if (!query) return texto;
-    var qNorm = normalizar(query);
-    var seguro = texto.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    var norm = normalizar(texto);
-    var idx = norm.indexOf(qNorm);
-    if (idx < 0) return seguro;
-    return seguro.slice(0,idx) + '<mark>' + seguro.slice(idx, idx+qNorm.length) + '</mark>' + seguro.slice(idx+qNorm.length);
+    var qn = norm(query);
+    var seg = texto.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var idx = norm(texto).indexOf(qn);
+    if (idx < 0) return seg;
+    return seg.slice(0,idx) + '<mark>' + seg.slice(idx, idx+qn.length) + '</mark>' + seg.slice(idx+qn.length);
   }
 </script>
 </body>
