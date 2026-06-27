@@ -38,6 +38,7 @@
     .tarjeta.desaparecido { border-left-color: #f59e0b; }
     .tarjeta.localizado   { border-left-color: #22c55e; }
     .tarjeta.rescate      { border-left-color: #dc2626; }
+    .tarjeta.fallecido    { border-left-color: #71717a; background: #fafafa; }
     .tarjeta-resumen { padding: 14px; }
     .tarjeta-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
     .nombre { font-weight: 700; font-size: 1rem; line-height: 1.3; flex: 1; }
@@ -46,6 +47,7 @@
     .badge.desaparecido { background: #fef3c7; color: #92400e; }
     .badge.localizado   { background: #dcfce7; color: #166534; }
     .badge.rescate      { background: #fee2e2; color: #991b1b; }
+    .badge.fallecido    { background: #f4f4f5; color: #52525b; }
     .tarjeta-datos { font-size: 0.82rem; color: #52525b; display: flex; flex-direction: column; gap: 3px; }
     .tarjeta-datos span { display: flex; align-items: flex-start; gap: 6px; }
     .tarjeta-datos .etiq { color: #a1a1aa; min-width: 60px; flex-shrink: 0; }
@@ -101,6 +103,7 @@
     <button class="filtro-btn activo" data-estado="todos" onclick="setFiltro(this)">Todos</button>
     <button class="filtro-btn" data-estado="desaparecido" onclick="setFiltro(this)">&#9888;&#65039; Buscados</button>
     <button class="filtro-btn" data-estado="localizado" onclick="setFiltro(this)">&#9989; Localizados</button>
+    <button class="filtro-btn" data-estado="fallecido" onclick="setFiltro(this)">&#129721; Fallecidos</button>
   </div>
   <div class="ordenar-bar">
     <label>Ordenar por:</label>
@@ -210,6 +213,11 @@
   }
 
   function esLoc(e) { return e && (e.includes('localiz') || e.includes('encontr') || e.includes('salvo')); }
+  function esFallecido(r) {
+    var e = (r.estado || '').toLowerCase();
+    var d = (r.descripcion || '').toLowerCase();
+    return e.includes('fallec') || d.includes('fallec');
+  }
 
   function setFiltro(btn) {
     document.querySelectorAll('.filtro-btn').forEach(function(b) { b.classList.remove('activo'); });
@@ -248,9 +256,10 @@
 
     var filtrados = REGISTROS.filter(function(r) {
       if (filtroEstado !== 'todos') {
-        if (filtroEstado === 'localizado' && !esLoc(r.estado)) return false;
+        if (filtroEstado === 'localizado' && (!esLoc(r.estado) || esFallecido(r))) return false;
         if (filtroEstado === 'desaparecido' && r.estado !== 'desaparecido') return false;
         if (filtroEstado === 'atrapado_rescate' && r.estado !== 'atrapado_rescate') return false;
+        if (filtroEstado === 'fallecido' && !esFallecido(r)) return false;
       }
       if (!esNombreValido(r.nombre)) return false;
       if (!q) return true;
@@ -277,11 +286,12 @@
 
   function crearTarjeta(r, query) {
     var div = document.createElement('div');
-    var loc = esLoc(r.estado);
-    var clase = loc ? 'localizado' : r.estado === 'atrapado_rescate' ? 'rescate' : 'desaparecido';
+    var loc  = esLoc(r.estado);
+    var fall = esFallecido(r);
+    var clase = fall ? 'fallecido' : loc ? 'localizado' : r.estado === 'atrapado_rescate' ? 'rescate' : 'desaparecido';
     div.className = 'tarjeta ' + clase;
 
-    var badge = loc ? '&#9989; Localizado' : r.estado === 'atrapado_rescate' ? '&#128682; Atrapado' : '&#9888;&#65039; Buscado';
+    var badge = fall ? '&#129721; Fallecido' : loc ? '&#9989; Localizado' : r.estado === 'atrapado_rescate' ? '&#128682; Atrapado' : '&#9888;&#65039; Buscado';
     var nomHtml = query ? resaltar(r.nombre || '(sin nombre)', query) : (r.nombre || '(sin nombre)');
 
     var datos = [
