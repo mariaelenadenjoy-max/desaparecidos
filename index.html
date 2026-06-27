@@ -6,358 +6,158 @@
   <title>Buscador de Desaparecidos · Terremoto Venezuela 2026</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f4f4f5;
-      color: #18181b;
-      min-height: 100vh;
-    }
-
-    .contenedor {
-      max-width: 700px;
-      margin: 0 auto;
-    }
-
-    header {
-      background: #1d4ed8;
-      color: white;
-      padding: 16px 20px;
-      text-align: center;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f4f4f5; color: #18181b; min-height: 100vh; }
+    .contenedor { max-width: 700px; margin: 0 auto; }
+    header { background: #1d4ed8; color: white; padding: 16px 20px; text-align: center; }
     header h1 { font-size: 1.2rem; font-weight: 700; }
     header p  { font-size: 0.8rem; opacity: 0.85; margin-top: 4px; }
-
     .flag { font-size: 1.4rem; margin-bottom: 4px; }
-
-    /* ── ÚLTIMA ACTUALIZACIÓN ── */
-    #ultima-actualizacion {
-      background: #eff6ff;
-      border-bottom: 1px solid #bfdbfe;
-      text-align: center;
-      padding: 6px 16px;
-      font-size: 0.75rem;
-      color: #1d4ed8;
-    }
-
-    /* ── CARGA ── */
-    #zona-carga {
-      margin: 24px 16px;
-      border: 2px dashed #93c5fd;
-      border-radius: 12px;
-      padding: 32px 16px;
-      text-align: center;
-      background: white;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    #zona-carga:hover { background: #eff6ff; }
-    #zona-carga input { display: none; }
+    #ultima-actualizacion { background: #eff6ff; border-bottom: 1px solid #bfdbfe; text-align: center; padding: 6px 16px; font-size: 0.75rem; color: #1d4ed8; }
+    #zona-carga { margin: 24px 16px; border: 2px dashed #93c5fd; border-radius: 12px; padding: 32px 16px; text-align: center; background: white; }
     #zona-carga .icono { font-size: 2.5rem; margin-bottom: 8px; }
     #zona-carga p { color: #3b82f6; font-weight: 600; font-size: 0.95rem; }
     #zona-carga small { color: #6b7280; font-size: 0.8rem; }
-
-    /* ── BÚSQUEDA ── */
     #zona-busqueda { display: none; padding: 0 16px; }
-
-    .stats-bar {
-      background: white;
-      border-radius: 10px;
-      padding: 10px 14px;
-      margin-bottom: 12px;
-      font-size: 0.82rem;
-      color: #6b7280;
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
+    .stats-bar { background: white; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.82rem; color: #6b7280; display: flex; gap: 12px; flex-wrap: wrap; }
     .stats-bar span { display: flex; align-items: center; gap: 4px; }
-
-    #buscador {
-      width: 100%;
-      padding: 14px 16px;
-      font-size: 1rem;
-      border: 2px solid #e4e4e7;
-      border-radius: 10px;
-      outline: none;
-      margin-bottom: 10px;
-      transition: border-color 0.2s;
-    }
+    #buscador { width: 100%; padding: 14px 16px; font-size: 1rem; border: 2px solid #e4e4e7; border-radius: 10px; outline: none; margin-bottom: 10px; transition: border-color 0.2s; }
     #buscador:focus { border-color: #3b82f6; }
-
-    .filtros {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-    }
-    .filtro-btn {
-      padding: 6px 12px;
-      border-radius: 20px;
-      border: 1.5px solid #e4e4e7;
-      background: white;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-weight: 500;
-    }
+    .filtros { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .filtro-btn { padding: 6px 12px; border-radius: 20px; border: 1.5px solid #e4e4e7; background: white; font-size: 0.8rem; cursor: pointer; transition: all 0.15s; font-weight: 500; }
     .filtro-btn.activo { background: #1d4ed8; color: white; border-color: #1d4ed8; }
-
-    /* ── ORDENAR ── */
-    .ordenar-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 14px;
-      font-size: 0.78rem;
-      color: #6b7280;
-    }
+    .ordenar-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 0.78rem; color: #6b7280; }
     .ordenar-bar label { white-space: nowrap; }
-    .ordenar-bar select {
-      padding: 4px 8px;
-      border-radius: 8px;
-      border: 1.5px solid #e4e4e7;
-      background: white;
-      font-size: 0.78rem;
-      cursor: pointer;
-      outline: none;
-    }
+    .ordenar-bar select { padding: 4px 8px; border-radius: 8px; border: 1.5px solid #e4e4e7; background: white; font-size: 0.78rem; cursor: pointer; outline: none; }
     .ordenar-bar select:focus { border-color: #3b82f6; }
-
-    /* ── CONTADOR ── */
-    #contador {
-      font-size: 0.82rem;
-      color: #6b7280;
-      margin-bottom: 10px;
-      padding: 0 2px;
-    }
-
-    /* ── TARJETAS ── */
+    #contador { font-size: 0.82rem; color: #6b7280; margin-bottom: 10px; padding: 0 2px; }
     #resultados { display: flex; flex-direction: column; gap: 10px; padding-bottom: 32px; }
-
-    .tarjeta {
-      background: white;
-      border-radius: 12px;
-      padding: 14px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
-      border-left: 4px solid #e4e4e7;
-    }
-    .tarjeta.desaparecido  { border-left-color: #f59e0b; }
-    .tarjeta.localizado    { border-left-color: #22c55e; }
-    .tarjeta.rescate       { border-left-color: #dc2626; }
-
-    .tarjeta-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 6px;
-    }
-    .nombre {
-      font-weight: 700;
-      font-size: 1rem;
-      line-height: 1.3;
-      flex: 1;
-    }
-    .nombre mark {
-      background: #fef08a;
-      border-radius: 2px;
-      padding: 0 1px;
-    }
-
-    .badge {
-      font-size: 0.68rem;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 20px;
-      margin-left: 8px;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
+    .tarjeta { background: white; border-radius: 12px; padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); border-left: 4px solid #e4e4e7; }
+    .tarjeta.desaparecido { border-left-color: #f59e0b; }
+    .tarjeta.localizado   { border-left-color: #22c55e; }
+    .tarjeta.rescate      { border-left-color: #dc2626; }
+    .tarjeta-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .nombre { font-weight: 700; font-size: 1rem; line-height: 1.3; flex: 1; }
+    .nombre mark { background: #fef08a; border-radius: 2px; padding: 0 1px; }
+    .badge { font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; margin-left: 8px; white-space: nowrap; flex-shrink: 0; }
     .badge.desaparecido { background: #fef3c7; color: #92400e; }
     .badge.localizado   { background: #dcfce7; color: #166534; }
     .badge.rescate      { background: #fee2e2; color: #991b1b; }
-
-    .tarjeta-datos {
-      font-size: 0.82rem;
-      color: #52525b;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
+    .tarjeta-datos { font-size: 0.82rem; color: #52525b; display: flex; flex-direction: column; gap: 3px; }
     .tarjeta-datos span { display: flex; align-items: flex-start; gap: 6px; }
     .tarjeta-datos .etiq { color: #a1a1aa; min-width: 60px; flex-shrink: 0; }
-
-    .fuente-tag {
-      display: inline-block;
-      font-size: 0.68rem;
-      color: #6b7280;
-      background: #f4f4f5;
-      border-radius: 4px;
-      padding: 2px 6px;
-      margin-top: 6px;
-    }
-
-    /* ── VACÍO ── */
-    #vacio {
-      display: none;
-      text-align: center;
-      padding: 48px 16px;
-      color: #6b7280;
-    }
+    .fuente-tag { display: inline-block; font-size: 0.68rem; color: #6b7280; background: #f4f4f5; border-radius: 4px; padding: 2px 6px; margin-top: 6px; }
+    #vacio { display: none; text-align: center; padding: 48px 16px; color: #6b7280; }
     #vacio .icono { font-size: 3rem; margin-bottom: 12px; }
-
-    /* ── PIE ── */
-    footer {
-      text-align: center;
-      padding: 16px;
-      font-size: 0.75rem;
-      color: #a1a1aa;
-    }
+    footer { text-align: center; padding: 16px; font-size: 0.75rem; color: #a1a1aa; }
   </style>
 </head>
 <body>
-
 <header>
-  <div class="flag">🇻🇪</div>
+  <div class="flag">&#127483;&#127466;</div>
   <h1>Buscador de Desaparecidos</h1>
-  <p>Terremoto Venezuela · 24 de junio de 2026</p>
+  <p>Terremoto Venezuela &middot; 24 de junio de 2026</p>
 </header>
-
-<div id="ultima-actualizacion">🕐 Cargando…</div>
-
-<!-- CARGA -->
+<div id="ultima-actualizacion">&#128336; Cargando&hellip;</div>
 <div class="contenedor">
 <div id="zona-carga">
-  <div class="icono">⏳</div>
-  <p>Cargando datos…</p>
+  <div class="icono">&#9203;</div>
+  <p>Cargando datos&hellip;</p>
   <small>Esto toma unos segundos</small>
 </div>
-
-<!-- BÚSQUEDA -->
 <div id="zona-busqueda">
   <div class="stats-bar" id="stats-bar"></div>
-
-  <input
-    type="search"
-    id="buscador"
-    placeholder="🔍  Buscar por nombre o cédula…"
-    autocomplete="off"
-    autocorrect="off"
-    spellcheck="false"
-  >
-
+  <input type="search" id="buscador" placeholder="&#128269;  Buscar por nombre o c&eacute;dula&hellip;" autocomplete="off" autocorrect="off" spellcheck="false">
   <div class="filtros">
     <button class="filtro-btn activo" data-estado="todos" onclick="setFiltro(this)">Todos</button>
-    <button class="filtro-btn" data-estado="desaparecido" onclick="setFiltro(this)">⚠️ Buscados</button>
-    <button class="filtro-btn" data-estado="localizado" onclick="setFiltro(this)">✅ Localizados</button>
+    <button class="filtro-btn" data-estado="desaparecido" onclick="setFiltro(this)">&#9888;&#65039; Buscados</button>
+    <button class="filtro-btn" data-estado="localizado" onclick="setFiltro(this)">&#9989; Localizados</button>
   </div>
-
   <div class="ordenar-bar">
     <label>Ordenar por:</label>
     <select id="orden" onchange="mostrarResultados(document.getElementById('buscador').value.trim())">
-      <option value="defecto">— Sin orden —</option>
-      <option value="az">Nombre A → Z</option>
-      <option value="za">Nombre Z → A</option>
-      <option value="reciente">Más reciente primero</option>
-      <option value="antiguo">Más antiguo primero</option>
+      <option value="defecto">&mdash; Sin orden &mdash;</option>
+      <option value="az">Nombre A &rarr; Z</option>
+      <option value="za">Nombre Z &rarr; A</option>
+      <option value="reciente">M&aacute;s reciente primero</option>
+      <option value="antiguo">M&aacute;s antiguo primero</option>
     </select>
   </div>
-
   <div id="contador"></div>
   <div id="resultados"></div>
   <div id="vacio">
-    <div class="icono">🔍</div>
-    <p>No se encontraron resultados.<br>Intenta con otro nombre o cédula.</p>
+    <div class="icono">&#128269;</div>
+    <p>No se encontraron resultados.<br>Intenta con otro nombre o c&eacute;dula.</p>
   </div>
 </div>
-</div><!-- /contenedor -->
-
+</div>
 <footer>
-  Datos de: encuentralos.tecnosoft.dev · laguaira.hsiciliano.com · venezuelareporta.org<br>
-  pacientesterremotovzla.lovable.app · desaparecidosterremotovenezuela.com<br>
-  Hospitales · Lista Oficial · Centro de Acopio Campo de Golf La Guaira<br>
-  Información no verificada · Solo con fines humanitarios
+  Datos de: encuentralos.tecnosoft.dev &middot; laguaira.hsiciliano.com &middot; venezuelareporta.org<br>
+  Hospitales &middot; Lista Oficial &middot; Centro de Acopio Campo de Golf La Guaira<br>
+  Informaci&oacute;n no verificada &middot; Solo con fines humanitarios
 </footer>
-
 <script>
-  let REGISTROS = [];
-  let filtroEstado = 'todos';
-  const MAX_RESULTADOS = 50;
-  const CSV_URL = 'desaparecidos_consolidado.csv';
+  var REGISTROS = [];
+  var filtroEstado = 'todos';
+  var MAX_RESULTADOS = 50;
+  var CSV_URL = 'desaparecidos_consolidado.csv';
 
-  // ── CARGA AUTOMÁTICA DEL CSV ──
   window.addEventListener('DOMContentLoaded', function() {
     fetch(CSV_URL)
-      .then(r => {
+      .then(function(r) {
         if (!r.ok) throw new Error('No se pudo cargar el CSV');
-        // Capturar fecha de última modificación del servidor
-        const lastModified = r.headers.get('Last-Modified');
-        if (lastModified) {
-          const fecha = new Date(lastModified);
-          mostrarUltimaActualizacion(fecha);
-        }
+        var lastModified = r.headers.get('Last-Modified');
+        if (lastModified) mostrarUltimaActualizacion(new Date(lastModified));
         return r.text();
       })
-      .then(texto => {
+      .then(function(texto) {
         REGISTROS = parsearCSV(texto);
-        // Si no hubo cabecera HTTP, calcular desde los datos
-        if (document.getElementById('ultima-actualizacion').textContent === '🕐 Cargando…') {
+        if (document.getElementById('ultima-actualizacion').textContent.indexOf('Cargando') >= 0) {
           calcularUltimaActualizacionDesdeDatos();
         }
         iniciarBusqueda();
       })
-      .catch(err => {
-        document.getElementById('zona-carga').innerHTML = `
-          <div class="icono">❌</div>
-          <p style="color:#dc2626">Error al cargar los datos</p>
-          <small>${err.message}</small>
-        `;
+      .catch(function(err) {
+        document.getElementById('zona-carga').innerHTML = '<div class="icono">&#10060;</div><p style="color:#dc2626">Error al cargar los datos</p><small>' + err.message + '</small>';
         document.getElementById('ultima-actualizacion').textContent = '';
       });
   });
 
   function mostrarUltimaActualizacion(fecha) {
-    const opciones = { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Caracas' };
-    const texto = fecha.toLocaleDateString('es-VE', opciones);
-    document.getElementById('ultima-actualizacion').textContent = '🕐 Última actualización: ' + texto + ' (hora Venezuela)';
+    var opciones = { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Caracas' };
+    document.getElementById('ultima-actualizacion').textContent = '\u{1F550} \xDAltima actualizaci\xF3n: ' + fecha.toLocaleDateString('es-VE', opciones) + ' (hora Venezuela)';
   }
 
   function calcularUltimaActualizacionDesdeDatos() {
-    // Buscar la fecha más reciente en el campo "creado"
-    let maxFecha = null;
-    for (const r of REGISTROS) {
+    var maxFecha = null;
+    for (var i = 0; i < REGISTROS.length; i++) {
+      var r = REGISTROS[i];
       if (!r.creado) continue;
-      const d = new Date(r.creado);
+      var d = new Date(r.creado);
       if (!isNaN(d) && (!maxFecha || d > maxFecha)) maxFecha = d;
     }
-    if (maxFecha) {
-      mostrarUltimaActualizacion(maxFecha);
-    } else {
-      document.getElementById('ultima-actualizacion').textContent = '🕐 Fecha de actualización no disponible';
-    }
+    if (maxFecha) mostrarUltimaActualizacion(maxFecha);
+    else document.getElementById('ultima-actualizacion').textContent = '\u{1F550} Fecha de actualizaci\xF3n no disponible';
   }
 
   function parsearCSV(texto) {
-    const lineas = texto.split('\n');
+    var lineas = texto.split('\n');
     if (lineas.length < 2) return [];
-    const encabezados = parsearLinea(lineas[0]);
-    const filas = [];
-    for (let i = 1; i < lineas.length; i++) {
-      const vals = parsearLinea(lineas[i]);
+    var encabezados = parsearLinea(lineas[0]);
+    var filas = [];
+    for (var i = 1; i < lineas.length; i++) {
+      var vals = parsearLinea(lineas[i]);
       if (vals.length < 2) continue;
-      const obj = {};
-      encabezados.forEach((h, idx) => { obj[h] = (vals[idx] || '').trim(); });
+      var obj = {};
+      encabezados.forEach(function(h, idx) { obj[h] = (vals[idx] || '').trim(); });
       filas.push(obj);
     }
     return filas;
   }
 
   function parsearLinea(linea) {
-    const resultado = [];
-    let actual = '';
-    let dentroComillas = false;
-    for (let i = 0; i < linea.length; i++) {
-      const c = linea[i];
+    var resultado = [], actual = '', dentroComillas = false;
+    for (var i = 0; i < linea.length; i++) {
+      var c = linea[i];
       if (c === '"') { dentroComillas = !dentroComillas; }
       else if (c === ',' && !dentroComillas) { resultado.push(actual); actual = ''; }
       else { actual += c; }
@@ -369,68 +169,54 @@
   function iniciarBusqueda() {
     document.getElementById('zona-carga').style.display = 'none';
     document.getElementById('zona-busqueda').style.display = 'block';
-
-    const total       = REGISTROS.length;
-    const localizados = REGISTROS.filter(r => r.estado && (r.estado.includes('localiz') || r.estado.includes('encontr') || r.estado.includes('salvo'))).length;
-    const atrapados   = REGISTROS.filter(r => r.estado === 'atrapado_rescate').length;
-    document.getElementById('stats-bar').innerHTML = `
-      <span>📋 <strong>${total.toLocaleString()}</strong> registros</span>
-      <span>⚠️ <strong>${(total - localizados).toLocaleString()}</strong> buscados</span>
-      <span>✅ <strong>${localizados.toLocaleString()}</strong> localizados</span>
-      ${atrapados > 0 ? `<span>🆘 <strong>${atrapados}</strong> atrapados</span>` : ''}
-    `;
-
+    var total = REGISTROS.length;
+    var localizados = REGISTROS.filter(function(r) { return r.estado && (r.estado.includes('localiz') || r.estado.includes('encontr') || r.estado.includes('salvo')); }).length;
+    var atrapados = REGISTROS.filter(function(r) { return r.estado === 'atrapado_rescate'; }).length;
+    document.getElementById('stats-bar').innerHTML =
+      '<span>&#128203; <strong>' + total.toLocaleString() + '</strong> registros</span>' +
+      '<span>&#9888;&#65039; <strong>' + (total - localizados).toLocaleString() + '</strong> buscados</span>' +
+      '<span>&#9989; <strong>' + localizados.toLocaleString() + '</strong> localizados</span>' +
+      (atrapados > 0 ? '<span>&#128682; <strong>' + atrapados + '</strong> atrapados</span>' : '');
     mostrarResultados('');
-    document.getElementById('buscador').addEventListener('input', function() {
-      mostrarResultados(this.value.trim());
-    });
+    document.getElementById('buscador').addEventListener('input', function() { mostrarResultados(this.value.trim()); });
   }
 
   function setFiltro(btn) {
-    document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
+    document.querySelectorAll('.filtro-btn').forEach(function(b) { b.classList.remove('activo'); });
     btn.classList.add('activo');
     filtroEstado = btn.dataset.estado;
     mostrarResultados(document.getElementById('buscador').value.trim());
   }
 
   function ordenarRegistros(lista) {
-    const orden = document.getElementById('orden').value;
-    if (orden === 'az') {
-      return [...lista].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
-    } else if (orden === 'za') {
-      return [...lista].sort((a, b) => (b.nombre || '').localeCompare(a.nombre || '', 'es'));
-    } else if (orden === 'reciente') {
-      return [...lista].sort((a, b) => {
-        const da = new Date(b.creado || 0), db = new Date(a.creado || 0);
-        return isNaN(da) ? 1 : isNaN(db) ? -1 : da - db;
-      });
-    } else if (orden === 'antiguo') {
-      return [...lista].sort((a, b) => {
-        const da = new Date(a.creado || 0), db = new Date(b.creado || 0);
-        return isNaN(da) ? 1 : isNaN(db) ? -1 : da - db;
-      });
-    }
+    var orden = document.getElementById('orden').value;
+    if (orden === 'az') return lista.slice().sort(function(a,b) { return (a.nombre||'').localeCompare(b.nombre||'','es'); });
+    if (orden === 'za') return lista.slice().sort(function(a,b) { return (b.nombre||'').localeCompare(a.nombre||'','es'); });
+    if (orden === 'reciente') return lista.slice().sort(function(a,b) { var da=new Date(b.creado||0),db=new Date(a.creado||0); return isNaN(da)?1:isNaN(db)?-1:da-db; });
+    if (orden === 'antiguo')  return lista.slice().sort(function(a,b) { var da=new Date(a.creado||0),db=new Date(b.creado||0); return isNaN(da)?1:isNaN(db)?-1:da-db; });
     return lista;
   }
 
   function mostrarResultados(query) {
-    const q = normalizar(query);
-    const resultados = document.getElementById('resultados');
-    const vacio = document.getElementById('vacio');
-    const contador = document.getElementById('contador');
+    var q = normalizar(query);
+    var resultados = document.getElementById('resultados');
+    var vacio = document.getElementById('vacio');
+    var contador = document.getElementById('contador');
     resultados.innerHTML = '';
 
-    let filtrados = REGISTROS.filter(r => {
+    var filtrados = REGISTROS.filter(function(r) {
       if (filtroEstado !== 'todos') {
         if (filtroEstado === 'localizado' && !(r.estado.includes('localiz') || r.estado.includes('encontr') || r.estado.includes('salvo'))) return false;
         if (filtroEstado === 'desaparecido' && r.estado !== 'desaparecido') return false;
         if (filtroEstado === 'atrapado_rescate' && r.estado !== 'atrapado_rescate') return false;
       }
+      if (!q && !r.nombre) return false;
       if (!q) return true;
-      const nombre   = normalizar(r.nombre || '');
-      const cedula   = (r.cedula || '').replace(/\D/g, '');
-      const ubicacion = normalizar(r.ubicacion || '');
-      return nombre.includes(q) || cedula.includes(q) || ubicacion.includes(q);
+      var nombre = normalizar(r.nombre || '');
+      var cedula = (r.cedula || '').replace(/\D/g, '');
+      var ubicacion = normalizar(r.ubicacion || '');
+      var desc = normalizar(r.descripcion || '');
+      return nombre.includes(q) || cedula.includes(q) || ubicacion.includes(q) || desc.includes(q);
     });
 
     filtrados = ordenarRegistros(filtrados);
@@ -440,83 +226,51 @@
       contador.textContent = '';
       return;
     }
-
     vacio.style.display = 'none';
-    const mostrando = Math.min(filtrados.length, MAX_RESULTADOS);
+    var mostrando = Math.min(filtrados.length, MAX_RESULTADOS);
     contador.textContent = filtrados.length > MAX_RESULTADOS
-      ? `Mostrando ${mostrando} de ${filtrados.length.toLocaleString()} resultados. Afina la búsqueda para ver más.`
-      : `${filtrados.length.toLocaleString()} resultado${filtrados.length !== 1 ? 's' : ''}`;
-
-    filtrados.slice(0, MAX_RESULTADOS).forEach(r => {
-      resultados.appendChild(crearTarjeta(r, query));
-    });
+      ? 'Mostrando ' + mostrando + ' de ' + filtrados.length.toLocaleString() + ' resultados. Afina la b\xFAsqueda para ver m\xE1s.'
+      : filtrados.length.toLocaleString() + ' resultado' + (filtrados.length !== 1 ? 's' : '');
+    filtrados.slice(0, MAX_RESULTADOS).forEach(function(r) { resultados.appendChild(crearTarjeta(r, query)); });
   }
 
   function crearTarjeta(r, query) {
-    const div = document.createElement('div');
-    const esLocalizado = r.estado === 'localizado' || r.estado === 'encontrado' || r.estado === 'a_salvo';
-    const clase = esLocalizado ? 'localizado'
-                : r.estado === 'atrapado_rescate' ? 'rescate'
-                : 'desaparecido';
-    div.className = `tarjeta ${clase}`;
-
-    const badgeTexto = esLocalizado                      ? '✅ Localizado'
-                     : r.estado === 'atrapado_rescate'  ? '🆘 Atrapado'
-                     : '⚠️ Buscado';
-
-    const nombreResaltado = query
-      ? resaltar(r.nombre || '(sin nombre)', query)
-      : (r.nombre || '(sin nombre)');
-
-    const datosHTML = [
-      r.cedula     ? `<span><span class="etiq">Cédula</span>${r.cedula}</span>` : '',
-      r.edad       ? `<span><span class="etiq">Edad</span>${r.edad} años${r.sexo ? ' · ' + r.sexo : ''}</span>` : '',
-      r.ubicacion  ? `<span><span class="etiq">Zona</span>${r.ubicacion}</span>` : '',
-      r.descripcion? `<span><span class="etiq">Señas</span>${r.descripcion}</span>` : '',
-      r.contacto   ? `<span><span class="etiq">Contacto</span><strong>${r.contacto}</strong></span>` : '',
-      r.creado     ? `<span><span class="etiq">Fecha</span>${r.creado}</span>` : '',
+    var div = document.createElement('div');
+    var esLocalizado = r.estado === 'localizado' || r.estado === 'encontrado' || r.estado === 'a_salvo' || (r.estado && (r.estado.includes('localiz') || r.estado.includes('encontr') || r.estado.includes('salvo')));
+    var clase = esLocalizado ? 'localizado' : r.estado === 'atrapado_rescate' ? 'rescate' : 'desaparecido';
+    div.className = 'tarjeta ' + clase;
+    var badgeTexto = esLocalizado ? '&#9989; Localizado' : r.estado === 'atrapado_rescate' ? '&#128682; Atrapado' : '&#9888;&#65039; Buscado';
+    var nombreResaltado = query ? resaltar(r.nombre || '(sin nombre)', query) : (r.nombre || '(sin nombre)');
+    var datosHTML = [
+      r.cedula      ? '<span><span class="etiq">C\xE9dula</span>' + r.cedula + '</span>' : '',
+      r.edad        ? '<span><span class="etiq">Edad</span>' + r.edad + ' a\xF1os' + (r.sexo ? ' &middot; ' + r.sexo : '') + '</span>' : '',
+      r.ubicacion   ? '<span><span class="etiq">Zona</span>' + r.ubicacion + '</span>' : '',
+      r.descripcion ? '<span><span class="etiq">Se\xF1as</span>' + r.descripcion + '</span>' : '',
+      r.contacto    ? '<span><span class="etiq">Contacto</span><strong>' + r.contacto + '</strong></span>' : '',
+      r.creado      ? '<span><span class="etiq">Fecha</span>' + r.creado + '</span>' : '',
     ].filter(Boolean).join('');
-
-    const fuentes = {
-      encuentralos:        'Encuéntralos',
-      hsiciliano:          'La Guaira · Hsiciliano',
-      venezuelatebusca:    'Venezuela te busca',
-      venezuelareporta:    'Venezuela Reporta',
-      pacientes_hospitales:'Pacientes en Hospitales',
-      desaparecidos_ve:    'Desaparecidos Terremoto VE',
-      hospitales_pdf:      'Hospitales · Lista Oficial',
-      acopio_campo_golf:   'Acopio · Campo de Golf La Guaira',
+    var fuentes = {
+      encuentralos:'Enc\xFAentralos', hsiciliano:'La Guaira \xB7 Hsiciliano',
+      venezuelatebusca:'Venezuela te busca', venezuelareporta:'Venezuela Reporta',
+      pacientes_hospitales:'Pacientes en Hospitales', desaparecidos_ve:'Desaparecidos Terremoto VE',
+      hospitales_pdf:'Hospitales \xB7 Lista Oficial', acopio_campo_golf:'Acopio \xB7 Campo de Golf La Guaira',
     };
-
-    div.innerHTML = `
-      <div class="tarjeta-header">
-        <div class="nombre">${nombreResaltado}</div>
-        <span class="badge ${clase}">${badgeTexto}</span>
-      </div>
-      <div class="tarjeta-datos">${datosHTML}</div>
-      <span class="fuente-tag">📌 ${fuentes[r.fuente] || r.fuente}</span>
-    `;
+    div.innerHTML = '<div class="tarjeta-header"><div class="nombre">' + nombreResaltado + '</div><span class="badge ' + clase + '">' + badgeTexto + '</span></div><div class="tarjeta-datos">' + datosHTML + '</div><span class="fuente-tag">&#128204; ' + (fuentes[r.fuente] || r.fuente) + '</span>';
     return div;
   }
 
   function normalizar(str) {
-    return str.toLowerCase()
-      .normalize('NFD').replace(/[̀-ͯ]/g, '')
-      .replace(/[^a-z0-9 ]/g, ' ')
-      .replace(/\s+/g, ' ').trim();
+    return str.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
   }
 
   function resaltar(texto, query) {
     if (!query) return texto;
-    const qNorm = normalizar(query);
-    const seguro = texto.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const regex = new RegExp(qNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    const norm = normalizar(texto);
-    const match = regex.exec(norm);
-    if (!match) return seguro;
-    const ini = match.index;
-    const fin = ini + match[0].length;
-    return seguro.slice(0, ini) + '<mark>' + seguro.slice(ini, fin) + '</mark>' + seguro.slice(fin);
+    var qNorm = normalizar(query);
+    var seguro = texto.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var norm = normalizar(texto);
+    var idx = norm.indexOf(qNorm);
+    if (idx < 0) return seguro;
+    return seguro.slice(0,idx) + '<mark>' + seguro.slice(idx, idx+qNorm.length) + '</mark>' + seguro.slice(idx+qNorm.length);
   }
 </script>
 </body>
