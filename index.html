@@ -30,7 +30,17 @@
 
     .flag { font-size: 1.4rem; margin-bottom: 4px; }
 
-    /* ── CARGA DE ARCHIVO ── */
+    /* ── ÚLTIMA ACTUALIZACIÓN ── */
+    #ultima-actualizacion {
+      background: #eff6ff;
+      border-bottom: 1px solid #bfdbfe;
+      text-align: center;
+      padding: 6px 16px;
+      font-size: 0.75rem;
+      color: #1d4ed8;
+    }
+
+    /* ── CARGA ── */
     #zona-carga {
       margin: 24px 16px;
       border: 2px dashed #93c5fd;
@@ -78,7 +88,7 @@
     .filtros {
       display: flex;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 8px;
       flex-wrap: wrap;
     }
     .filtro-btn {
@@ -92,7 +102,27 @@
       font-weight: 500;
     }
     .filtro-btn.activo { background: #1d4ed8; color: white; border-color: #1d4ed8; }
-    .filtro-btn.rescate.activo { background: #dc2626; border-color: #dc2626; }
+
+    /* ── ORDENAR ── */
+    .ordenar-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      font-size: 0.78rem;
+      color: #6b7280;
+    }
+    .ordenar-bar label { white-space: nowrap; }
+    .ordenar-bar select {
+      padding: 4px 8px;
+      border-radius: 8px;
+      border: 1.5px solid #e4e4e7;
+      background: white;
+      font-size: 0.78rem;
+      cursor: pointer;
+      outline: none;
+    }
+    .ordenar-bar select:focus { border-color: #3b82f6; }
 
     /* ── CONTADOR ── */
     #contador {
@@ -193,6 +223,8 @@
   <p>Terremoto Venezuela · 24 de junio de 2026</p>
 </header>
 
+<div id="ultima-actualizacion">🕐 Cargando…</div>
+
 <!-- CARGA -->
 <div class="contenedor">
 <div id="zona-carga">
@@ -220,6 +252,17 @@
     <button class="filtro-btn" data-estado="localizado" onclick="setFiltro(this)">✅ Localizados</button>
   </div>
 
+  <div class="ordenar-bar">
+    <label>Ordenar por:</label>
+    <select id="orden" onchange="mostrarResultados(document.getElementById('buscador').value.trim())">
+      <option value="defecto">— Sin orden —</option>
+      <option value="az">Nombre A → Z</option>
+      <option value="za">Nombre Z → A</option>
+      <option value="reciente">Más reciente primero</option>
+      <option value="antiguo">Más antiguo primero</option>
+    </select>
+  </div>
+
   <div id="contador"></div>
   <div id="resultados"></div>
   <div id="vacio">
@@ -232,6 +275,7 @@
 <footer>
   Datos de: encuentralos.tecnosoft.dev · laguaira.hsiciliano.com · venezuelareporta.org<br>
   pacientesterremotovzla.lovable.app · desaparecidosterremotovenezuela.com<br>
+  Hospitales · Lista Oficial · Centro de Acopio Campo de Golf La Guaira<br>
   Información no verificada · Solo con fines humanitarios
 </footer>
 
@@ -246,10 +290,20 @@
     fetch(CSV_URL)
       .then(r => {
         if (!r.ok) throw new Error('No se pudo cargar el CSV');
+        // Capturar fecha de última modificación del servidor
+        const lastModified = r.headers.get('Last-Modified');
+        if (lastModified) {
+          const fecha = new Date(lastModified);
+          mostrarUltimaActualizacion(fecha);
+        }
         return r.text();
       })
       .then(texto => {
         REGISTROS = parsearCSV(texto);
+        // Si no hubo cabecera HTTP, calcular desde los datos
+        if (document.getElementById('ultima-actualizacion').textContent === '🕐 Cargando…') {
+          calcularUltimaActualizacionDesdeDatos();
+        }
         iniciarBusqueda();
       })
       .catch(err => {
@@ -258,8 +312,30 @@
           <p style="color:#dc2626">Error al cargar los datos</p>
           <small>${err.message}</small>
         `;
+        document.getElementById('ultima-actualizacion').textContent = '';
       });
   });
+
+  function mostrarUltimaActualizacion(fecha) {
+    const opciones = { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Caracas' };
+    const texto = fecha.toLocaleDateString('es-VE', opciones);
+    document.getElementById('ultima-actualizacion').textContent = '🕐 Última actualización: ' + texto + ' (hora Venezuela)';
+  }
+
+  function calcularUltimaActualizacionDesdeDatos() {
+    // Buscar la fecha más reciente en el campo "creado"
+    let maxFecha = null;
+    for (const r of REGISTROS) {
+      if (!r.creado) continue;
+      const d = new Date(r.creado);
+      if (!isNaN(d) && (!maxFecha || d > maxFecha)) maxFecha = d;
+    }
+    if (maxFecha) {
+      mostrarUltimaActualizacion(maxFecha);
+    } else {
+      document.getElementById('ultima-actualizacion').textContent = '🕐 Fecha de actualización no disponible';
+    }
+  }
 
   function parsearCSV(texto) {
     const lineas = texto.split('\n');
@@ -294,8 +370,7 @@
     document.getElementById('zona-carga').style.display = 'none';
     document.getElementById('zona-busqueda').style.display = 'block';
 
-    // Stats
-    const total      = REGISTROS.length;
+    const total       = REGISTROS.length;
     const localizados = REGISTROS.filter(r => r.estado && (r.estado.includes('localiz') || r.estado.includes('encontr') || r.estado.includes('salvo'))).length;
     const atrapados   = REGISTROS.filter(r => r.estado === 'atrapado_rescate').length;
     document.getElementById('stats-bar').innerHTML = `
@@ -318,6 +393,26 @@
     mostrarResultados(document.getElementById('buscador').value.trim());
   }
 
+  function ordenarRegistros(lista) {
+    const orden = document.getElementById('orden').value;
+    if (orden === 'az') {
+      return [...lista].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es'));
+    } else if (orden === 'za') {
+      return [...lista].sort((a, b) => (b.nombre || '').localeCompare(a.nombre || '', 'es'));
+    } else if (orden === 'reciente') {
+      return [...lista].sort((a, b) => {
+        const da = new Date(b.creado || 0), db = new Date(a.creado || 0);
+        return isNaN(da) ? 1 : isNaN(db) ? -1 : da - db;
+      });
+    } else if (orden === 'antiguo') {
+      return [...lista].sort((a, b) => {
+        const da = new Date(a.creado || 0), db = new Date(b.creado || 0);
+        return isNaN(da) ? 1 : isNaN(db) ? -1 : da - db;
+      });
+    }
+    return lista;
+  }
+
   function mostrarResultados(query) {
     const q = normalizar(query);
     const resultados = document.getElementById('resultados');
@@ -326,19 +421,19 @@
     resultados.innerHTML = '';
 
     let filtrados = REGISTROS.filter(r => {
-      // Filtro de estado
       if (filtroEstado !== 'todos') {
         if (filtroEstado === 'localizado' && !(r.estado.includes('localiz') || r.estado.includes('encontr') || r.estado.includes('salvo'))) return false;
         if (filtroEstado === 'desaparecido' && r.estado !== 'desaparecido') return false;
         if (filtroEstado === 'atrapado_rescate' && r.estado !== 'atrapado_rescate') return false;
       }
-      // Filtro de búsqueda
       if (!q) return true;
-      const nombre  = normalizar(r.nombre || '');
-      const cedula  = (r.cedula || '').replace(/\D/g, '');
+      const nombre   = normalizar(r.nombre || '');
+      const cedula   = (r.cedula || '').replace(/\D/g, '');
       const ubicacion = normalizar(r.ubicacion || '');
       return nombre.includes(q) || cedula.includes(q) || ubicacion.includes(q);
     });
+
+    filtrados = ordenarRegistros(filtrados);
 
     if (filtrados.length === 0) {
       vacio.style.display = 'block';
@@ -374,22 +469,23 @@
       : (r.nombre || '(sin nombre)');
 
     const datosHTML = [
-      r.cedula    ? `<span><span class="etiq">Cédula</span>${r.cedula}</span>` : '',
-      r.edad      ? `<span><span class="etiq">Edad</span>${r.edad} años${r.sexo ? ' · ' + r.sexo : ''}</span>` : '',
-      r.ubicacion ? `<span><span class="etiq">Zona</span>${r.ubicacion}</span>` : '',
-      r.descripcion ? `<span><span class="etiq">Señas</span>${r.descripcion}</span>` : '',
-      r.contacto  ? `<span><span class="etiq">Contacto</span><strong>${r.contacto}</strong></span>` : '',
+      r.cedula     ? `<span><span class="etiq">Cédula</span>${r.cedula}</span>` : '',
+      r.edad       ? `<span><span class="etiq">Edad</span>${r.edad} años${r.sexo ? ' · ' + r.sexo : ''}</span>` : '',
+      r.ubicacion  ? `<span><span class="etiq">Zona</span>${r.ubicacion}</span>` : '',
+      r.descripcion? `<span><span class="etiq">Señas</span>${r.descripcion}</span>` : '',
+      r.contacto   ? `<span><span class="etiq">Contacto</span><strong>${r.contacto}</strong></span>` : '',
+      r.creado     ? `<span><span class="etiq">Fecha</span>${r.creado}</span>` : '',
     ].filter(Boolean).join('');
 
     const fuentes = {
-      encuentralos:       'Encuéntralos',
-      hsiciliano:         'La Guaira · Hsiciliano',
-      venezuelatebusca:   'Venezuela te busca',
-      venezuelareporta:   'Venezuela Reporta',
-      pacientes_hospitales: 'Pacientes en Hospitales',
-      desaparecidos_ve:   'Desaparecidos Terremoto VE',
-      hospitales_pdf:     'Hospitales · Lista Oficial',
-      acopio_campo_golf:  'Acopio · Campo de Golf La Guaira',
+      encuentralos:        'Encuéntralos',
+      hsiciliano:          'La Guaira · Hsiciliano',
+      venezuelatebusca:    'Venezuela te busca',
+      venezuelareporta:    'Venezuela Reporta',
+      pacientes_hospitales:'Pacientes en Hospitales',
+      desaparecidos_ve:    'Desaparecidos Terremoto VE',
+      hospitales_pdf:      'Hospitales · Lista Oficial',
+      acopio_campo_golf:   'Acopio · Campo de Golf La Guaira',
     };
 
     div.innerHTML = `
@@ -413,10 +509,8 @@
   function resaltar(texto, query) {
     if (!query) return texto;
     const qNorm = normalizar(query);
-    // Escapar HTML básico
     const seguro = texto.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const regex = new RegExp(qNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    // Resaltar en el texto normalizado para encontrar posición
     const norm = normalizar(texto);
     const match = regex.exec(norm);
     if (!match) return seguro;
