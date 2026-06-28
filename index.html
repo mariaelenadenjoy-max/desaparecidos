@@ -364,6 +364,11 @@
     if (estaLoc && r.descripcion) {
       descResumen = '<div class="desc-localizado">&#128203; ' + r.descripcion + '</div>';
     }
+    // Para encuentralos localizado sin descripción: botón al perfil en el resumen
+    var btnPerfilResumen = '';
+    if (estaLoc && !r.descripcion && r.fuente === 'encuentralos' && r.url) {
+      btnPerfilResumen = '<div class="desc-localizado">&#128279; <a href="' + r.url + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Ver dónde está (hospital, condición) en Encuéntralos →</a></div>';
+    }
 
     // Fuentes: mostrar todas las del grupo
     var fuentesHtml = '';
@@ -396,6 +401,7 @@
         '<div class="tarjeta-header"><div class="nombre">' + nomHtml + '</div><span class="badge ' + clase + '">' + badge + '</span></div>' +
         '<div class="tarjeta-datos">' + datos + '</div>' +
         descResumen +
+        btnPerfilResumen +
         '<div class="tarjeta-fuentes">' + fuentesHtml + '</div>' +
         '<span class="expand-hint">toca para ver m\xE1s &#9660;</span>' +
       '</div>' +
