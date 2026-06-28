@@ -364,10 +364,11 @@
     if (estaLoc && r.descripcion) {
       descResumen = '<div class="desc-localizado">&#128203; ' + r.descripcion + '</div>';
     }
-    // Para encuentralos localizado sin descripción: botón al perfil en el resumen
+    // Para encuentralos localizado: link directo al perfil siempre visible
     var btnPerfilResumen = '';
-    if (estaLoc && !r.descripcion && r.fuente === 'encuentralos' && r.url) {
-      btnPerfilResumen = '<div class="desc-localizado">&#128279; <a href="' + r.url + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Ver dónde está (hospital, condición) en Encuéntralos →</a></div>';
+    var urlFuente = r.url || (r._fuentes_list && r._fuentes_list.indexOf('encuentralos') >= 0 ? '' : '');
+    if (estaLoc && urlFuente) {
+      btnPerfilResumen = '<div class="desc-localizado"><a href="' + urlFuente + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">&#128279; Ver hospital y condición en la fuente original →</a></div>';
     }
 
     // Fuentes: mostrar todas las del grupo
