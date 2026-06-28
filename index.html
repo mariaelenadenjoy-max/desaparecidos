@@ -282,6 +282,31 @@
       if (mejorUbi) merged.ubicacion = mejorUbi.ubicacion;
     }
 
+    // Calcular la mejor URL de perfil para los localizados
+    // (se guarda en _url_perfil para que crearTarjeta la use directamente)
+    if (localizados.length > 0 || esLoc(merged.estado)) {
+      var todosLocalizados = localizados.length > 0 ? localizados : [merged];
+      var mejorUrlLoc = '';
+      var mejorFuenteLoc = merged.fuente;
+      todosLocalizados.forEach(function(loc) {
+        if (!mejorUrlLoc) {
+          if (loc.url) {
+            mejorUrlLoc   = loc.url;
+            mejorFuenteLoc = loc.fuente;
+          } else if (loc.fuente === 'encuentralos' && loc.id_fuente) {
+            mejorUrlLoc   = 'https://encuentralos.tecnosoft.dev/#persona-' + loc.id_fuente;
+            mejorFuenteLoc = 'encuentralos';
+          } else if (loc.fuente === 'localizados_ve' && loc.id_fuente) {
+            mejorUrlLoc   = 'https://localizadosvenezuela.com/localizados/' + loc.id_fuente.replace(/^lve_/, '');
+            mejorFuenteLoc = 'localizados_ve';
+          }
+        }
+      });
+      if (!mejorUrlLoc && merged.url) mejorUrlLoc = merged.url;
+      merged._url_perfil   = mejorUrlLoc;
+      merged._fuente_loc   = mejorFuenteLoc;
+    }
+
     // Completar datos faltantes de cualquier registro del grupo
     grupo.forEach(function(r) {
       if (!merged.cedula   && r.cedula)   merged.cedula   = r.cedula;
@@ -336,7 +361,8 @@
     encuentralos:'Enc\xFAentralos', hsiciliano:'La Guaira \xB7 Hsiciliano',
     venezuelatebusca:'Venezuela te busca', venezuelareporta:'Venezuela Reporta',
     pacientes_hospitales:'Pacientes en Hospitales', desaparecidos_ve:'Desaparecidos Terremoto VE',
-    hospitales_pdf:'Hospitales \xB7 Lista Oficial', acopio_campo_golf:'Acopio \xB7 Campo de Golf La Guaira'
+    hospitales_pdf:'Hospitales \xB7 Lista Oficial', acopio_campo_golf:'Acopio \xB7 Campo de Golf La Guaira',
+    localizados_ve:'Localizados Venezuela', sos_vzla:'SOS Venezuela', hospitales_foto:'Hospitales \xB7 Fotos'
   };
 
   function crearTarjeta(r, query) {
@@ -366,13 +392,14 @@
     }
     // Para localizados: link directo al perfil siempre visible
     var btnPerfilResumen = '';
-    var urlPerfil = r.url || '';
-    // Reconstruir URL de encuentralos desde id_fuente si r.url está vacío
+    // Usar la URL pre-calculada en elegirRepresentante, con fallbacks
+    var urlPerfil = r._url_perfil || r.url || '';
     if (!urlPerfil && r.fuente === 'encuentralos' && r.id_fuente) {
       urlPerfil = 'https://encuentralos.tecnosoft.dev/#persona-' + r.id_fuente;
     }
     if (estaLoc && urlPerfil) {
-      var nombreFuente = FUENTES[r.fuente] || r.fuente || 'la fuente original';
+      var fuenteParaLink = r._fuente_loc || r.fuente;
+      var nombreFuente = FUENTES[fuenteParaLink] || fuenteParaLink || 'la fuente original';
       btnPerfilResumen = '<div class="desc-localizado"><a href="' + urlPerfil + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">&#128279; Ver dónde está en ' + nombreFuente + ' →</a></div>';
     }
 
