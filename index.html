@@ -246,6 +246,7 @@
     if (/\d{4}-\d{2}-\d{2}T/.test(n)) return false;       // timestamps ISO
     if (/[-_]{4,}/.test(n)) return false;                  // muchos guiones seguidos
     if (/^[A-Za-z0-9]{15,}$/.test(n.trim())) return false; // token/hash sin espacios
+    if (/^[\d\s]+$/.test(n.trim())) return false;           // solo números
     return true;
   }
 
