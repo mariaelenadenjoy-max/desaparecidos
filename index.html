@@ -364,11 +364,16 @@
     if (estaLoc && r.descripcion) {
       descResumen = '<div class="desc-localizado">&#128203; ' + r.descripcion + '</div>';
     }
-    // Para encuentralos localizado: link directo al perfil siempre visible
+    // Para localizados: link directo al perfil siempre visible
     var btnPerfilResumen = '';
-    var urlFuente = r.url || (r._fuentes_list && r._fuentes_list.indexOf('encuentralos') >= 0 ? '' : '');
-    if (estaLoc && urlFuente) {
-      btnPerfilResumen = '<div class="desc-localizado"><a href="' + urlFuente + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">&#128279; Ver hospital y condición en la fuente original →</a></div>';
+    var urlPerfil = r.url || '';
+    // Reconstruir URL de encuentralos desde id_fuente si r.url está vacío
+    if (!urlPerfil && r.fuente === 'encuentralos' && r.id_fuente) {
+      urlPerfil = 'https://encuentralos.tecnosoft.dev/#persona-' + r.id_fuente;
+    }
+    if (estaLoc && urlPerfil) {
+      var nombreFuente = FUENTES[r.fuente] || r.fuente || 'la fuente original';
+      btnPerfilResumen = '<div class="desc-localizado"><a href="' + urlPerfil + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">&#128279; Ver dónde está en ' + nombreFuente + ' →</a></div>';
     }
 
     // Fuentes: mostrar todas las del grupo
