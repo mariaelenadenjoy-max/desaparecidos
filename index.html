@@ -54,6 +54,7 @@
     .fuente-tag { display: inline-block; font-size: 0.68rem; color: #6b7280; background: #f4f4f5; border-radius: 4px; padding: 2px 6px; margin-top: 4px; margin-right: 4px; }
     .tarjeta-fuentes { margin-top: 4px; }
     .desc-localizado { margin-top: 6px; font-size: 0.82rem; color: #166534; background: #f0fdf4; border-left: 3px solid #4ade80; border-radius: 4px; padding: 5px 8px; line-height: 1.4; }
+    .fila.fila-loc { background: #f0fdf4; border-left: 3px solid #4ade80; padding-left: 8px; border-radius: 4px; margin-bottom: 4px; }
     .expand-hint { float: right; font-size: 0.68rem; color: #a1a1aa; margin-top: 6px; }
 
     /* ── PANEL EXPANDIDO ── */
@@ -379,7 +380,7 @@
     var btnVer = r.url ? '<br><a class="btn-ver" href="' + r.url + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">&#128279; Ver perfil completo</a>' : '';
     var extraCampos = [
       (!estaLoc && r.descripcion) ? '<div class="fila"><span class="etiq">Se\xF1as</span><span>' + r.descripcion + '</span></div>' : '',
-      r.creado ? '<div class="fila"><span class="etiq">Fecha</span><span>' + r.creado + '</span></div>' : '',
+      r.creado ? '<div class="fila"><span class="etiq">Fecha</span><span>' + formatFecha(r.creado) + '</span></div>' : '',
       (r._grupo_size > 1) ? '<div class="fila"><span class="etiq">Reportado/a en</span><span>' + r._grupo_size + ' fuentes</span></div>' : '',
     ].filter(Boolean).join('');
 
@@ -414,7 +415,7 @@
         div.querySelector('.expand-hint').textContent = 'cerrar ▲';
         // Cargar foto de encuentralos si aplica
         if (r.fuente === 'encuentralos' && r.id_fuente && document.getElementById(detalleId)) {
-          cargarFotoEncuentralos(r.id_fuente, detalleId);
+          cargarFotoEncuentralos(r.id_fuente, detalleId, div.querySelector('.tarjeta-detalle'), estaLoc);
         }
       }
     });
@@ -422,7 +423,7 @@
     return div;
   }
 
-  function cargarFotoEncuentralos(id, contenedorId) {
+  function cargarFotoEncuentralos(id, contenedorId, detalleDiv, estaLoc) {
     var cont = document.getElementById(contenedorId);
     if (!cont || cont.dataset.cargado) return;
     cont.dataset.cargado = '1';
@@ -437,10 +438,27 @@
         } else {
           cont.innerHTML = '<div class="sin-foto">&#128100;</div>';
         }
+
+        // Para localizados: mostrar pv_lugar, pv_salud, pv_contacto
+        if (estaLoc && detalleDiv) {
+          var camposDiv = detalleDiv.querySelector('.detalle-campos');
+          var infoHtml = '';
+          if (data.pv_lugar)    infoHtml += '<div class="fila fila-loc"><span class="etiq">Encontrado/a en</span><span>' + data.pv_lugar + '</span></div>';
+          if (data.pv_salud)    infoHtml += '<div class="fila fila-loc"><span class="etiq">Estado de salud</span><span>' + data.pv_salud + '</span></div>';
+          if (data.pv_contacto) infoHtml += '<div class="fila fila-loc"><span class="etiq">Tel. verificador</span><span><strong>' + data.pv_contacto + '</strong></span></div>';
+          if (infoHtml && camposDiv) camposDiv.insertAdjacentHTML('afterbegin', infoHtml);
+        }
       })
       .catch(function() {
         cont.innerHTML = '<div class="sin-foto">&#128100;</div>';
       });
+  }
+
+  function formatFecha(f) {
+    if (!f) return '';
+    var d = (f + '').slice(0, 10);
+    if (d.length < 10) return f;
+    return d.slice(8) + '/' + d.slice(5,7) + '/' + d.slice(0,4);
   }
 
   function norm(str) {
